@@ -479,9 +479,10 @@ img{max-width:100%;display:block}
 
 /* Waterfall Grid — 3 cols within the main area */
 .cm-grid{columns:3;column-gap:12px}
-.cm-card{break-inside:avoid;margin-bottom:12px;display:inline-block;width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;cursor:pointer;transition:all .3s cubic-bezier(.22,1,.36,1);opacity:0;animation:cardIn .4s cubic-bezier(.22,1,.36,1) forwards}
+.cm-card{break-inside:avoid;margin-bottom:12px;display:inline-block;width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;cursor:pointer;transition:all .3s cubic-bezier(.22,1,.36,1);opacity:0;animation:cmCardIn .4s cubic-bezier(.22,1,.36,1) forwards}
 .cm-card:hover{border-color:rgba(129,140,248,.2);transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.25)}
 .cm-card.hot{border-color:rgba(236,72,153,.15)}
+@keyframes cmCardIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
 
 /* Card Cover */
 .cm-cover{width:100%;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
