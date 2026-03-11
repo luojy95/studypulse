@@ -602,7 +602,7 @@ function renderFeatured() {
 function renderDailyRec() {
   const el = document.getElementById('dailyRec');
   if (!el) return;
-  const recs = MOCK_POSTS.filter(p => p.type === '解题笔记').slice(0, 4);
+  const recs = MOCK_POSTS.filter(p => p.type === '解题笔记').slice(0, 8);
   const pals = [['#1e1b4b','#312e81'],['#164e63','#0e7490'],['#4c1d95','#7c3aed'],['#064e3b','#059669']];
   el.innerHTML = recs.map((p, i) => {
     const [c1,c2] = pals[i % pals.length];
@@ -619,7 +619,7 @@ function renderDailyRec() {
 function loadMorePosts() {
   const g = document.getElementById('postsGrid');
   const posts = getFilteredComm();
-  const batch = posts.slice(commPostsShown, commPostsShown + 20);
+  const batch = posts.slice(commPostsShown, commPostsShown + 40);
 
   const palettes = [
     ['#1e1b4b','#3730a3','#818CF8'],['#164e63','#0e7490','#22d3ee'],['#4c1d95','#7c3aed','#c4b5fd'],
@@ -629,7 +629,7 @@ function loadMorePosts() {
   ];
   const formulas = ['F=ma','E=mc\u00b2','v=v\u2080+at','\u0394\u03a6/\u0394t','P=IV','W=Fd','\u03bb=h/p','F=kx','PV=nRT','E=h\u03bd'];
   const badgeMap = {'\u89e3\u9898\u7b14\u8bb0':'cm-badge-note','\u9519\u9898\u5206\u6790':'cm-badge-wrong','\u6253\u5361\u6210\u5c31':'cm-badge-streak','\u6c42\u52a9\u5e16':'cm-badge-help','\u7ecf\u9a8c\u5206\u4eab':'cm-badge-exp'};
-  const heights = [90,110,130,150,100,120,140,80,160,105];
+  const heights = [70,85,100,110,80,95,105,65,115,90];
 
   batch.forEach((p, idx) => {
     const i = commPostsShown + idx;
@@ -657,7 +657,7 @@ function loadMorePosts() {
       coverHTML = `<div class="cm-cover" style="height:${h}px;background:linear-gradient(135deg,${pal[0]},${pal[1]},${pal[2]})">${inner}</div>`;
     }
 
-    const bodyLen = [60,90,120,80,100][i % 5];
+    const bodyLen = [40,60,80,50,70][i % 5];
     const excerpt = p.content.replace(/\n/g,' ').substring(0, bodyLen) + (p.content.length > bodyLen ? '...' : '');
 
     let html = coverHTML;
