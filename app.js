@@ -42,48 +42,62 @@ function initParticleCanvas() {
   const c = document.getElementById('bgCanvas');
   if (!c) return;
   const ctx = c.getContext('2d');
-  let w, h, particles = [];
-  const N = 60;
+  let w, h, particles = [], mouse = {x: -999, y: -999};
+  const N = 80;
+  const colors = [
+    {r:129,g:140,b:248}, // violet
+    {r:6,g:182,b:212},   // cyan
+    {r:236,g:72,b:153},  // pink
+    {r:99,g:102,b:241}   // indigo
+  ];
 
-  function resize() {
-    w = c.width = window.innerWidth;
-    h = c.height = window.innerHeight;
-  }
+  function resize() { w = c.width = window.innerWidth; h = c.height = window.innerHeight; }
   resize();
   window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; }, {passive:true});
 
   for (let i = 0; i < N; i++) {
+    const col = colors[Math.floor(Math.random() * colors.length)];
     particles.push({
       x: Math.random() * w, y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
-      r: Math.random() * 1.5 + 0.5,
-      alpha: Math.random() * 0.3 + 0.05
+      vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25,
+      r: Math.random() * 1.8 + 0.4,
+      col, alpha: Math.random() * 0.25 + 0.05
     });
   }
 
   function draw() {
     ctx.clearRect(0, 0, w, h);
     for (const p of particles) {
+      // Mouse repulsion
+      const dx = p.x - mouse.x, dy = p.y - mouse.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if (dist < 200) { const f = (200-dist)/200*0.3; p.vx += dx/dist*f; p.vy += dy/dist*f; }
+      p.vx *= 0.99; p.vy *= 0.99;
       p.x += p.vx; p.y += p.vy;
       if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
       if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(129,140,248,${p.alpha})`;
+      ctx.fillStyle = `rgba(${p.col.r},${p.col.g},${p.col.b},${p.alpha})`;
       ctx.fill();
     }
-    // Draw connections
+    // Connections
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
         const dx = particles[i].x - particles[j].x;
         const dy = particles[i].y - particles[j].y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 150) {
+        if (dist < 140) {
+          const a = particles[i], b = particles[j];
+          const grad = ctx.createLinearGradient(a.x,a.y,b.x,b.y);
+          grad.addColorStop(0, `rgba(${a.col.r},${a.col.g},${a.col.b},${0.025*(1-dist/140)})`);
+          grad.addColorStop(1, `rgba(${b.col.r},${b.col.g},${b.col.b},${0.025*(1-dist/140)})`);
           ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(129,140,248,${0.03 * (1 - dist / 150)})`;
-          ctx.lineWidth = 0.5;
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 0.6;
           ctx.stroke();
         }
       }
@@ -128,8 +142,7 @@ function showPage(page) {
   if (page === 'community') initCommunity();
   if (page === 'analytics') initAnalytics();
   document.getElementById('navLinks').classList.remove('open');
-  // Re-observe new elements
-  setTimeout(initScrollObserver, 100);
+  reobserve();
 }
 
 function toggleMobileNav() {
@@ -458,6 +471,7 @@ function submitAnswer() {
     hdr.textContent = '✅ 回答正确！';
     hdr.className = 'p-result-banner ok';
     practiceCorrect++;
+    spawnConfetti();
   } else {
     hdr.textContent = '❌ 回答错误';
     hdr.className = 'p-result-banner err';
@@ -921,13 +935,15 @@ function showToast(msg, type = 'info') {
   const c = document.getElementById('toastContainer');
   const t = document.createElement('div');
   t.className = `toast ${type}`;
-  t.textContent = msg;
+  t.innerHTML = `<span>${msg}</span>`;
   c.appendChild(t);
+  // Trigger reflow for animation
+  t.offsetHeight;
   setTimeout(() => {
     t.style.opacity = '0';
-    t.style.transform = 'translateX(100%)';
-    t.style.transition = 'all .3s ease';
-    setTimeout(() => t.remove(), 300);
+    t.style.transform = 'translateX(120%) scale(0.9)';
+    t.style.transition = 'all .4s cubic-bezier(.22,1,.36,1)';
+    setTimeout(() => t.remove(), 400);
   }, 3000);
 }
 
@@ -977,4 +993,49 @@ function fmtDate(d) {
   if (diff < 1440) return Math.floor(diff / 60) + '小时前';
   if (diff < 10080) return Math.floor(diff / 1440) + '天前';
   return new Date(d).toLocaleDateString('zh-CN');
+}
+
+// ══════════ CONFETTI ══════════
+function spawnConfetti() {
+  const colors = ['#818CF8','#06B6D4','#EC4899','#F59E0B','#10B981','#6366F1'];
+  for (let i = 0; i < 30; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = (40 + Math.random() * 20) + 'vw';
+    el.style.top = (20 + Math.random() * 10) + 'vh';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    el.style.width = (4 + Math.random() * 8) + 'px';
+    el.style.height = (4 + Math.random() * 8) + 'px';
+    el.style.animationDuration = (1 + Math.random()) + 's';
+    el.style.animationDelay = (Math.random() * 0.3) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+}
+
+// ══════════ BUTTON RIPPLE ══════════
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.btn-glow');
+  if (!btn) return;
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  ripple.style.left = (e.clientX - rect.left) + 'px';
+  ripple.style.top = (e.clientY - rect.top) + 'px';
+  ripple.style.width = ripple.style.height = Math.max(rect.width, rect.height) + 'px';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+});
+
+// ══════════ SMOOTH SCROLL REVEAL (re-observe on page change) ══════════
+function reobserve() {
+  setTimeout(() => {
+    document.querySelectorAll('[data-anim]:not(.visible)').forEach(el => {
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+      }, { threshold: 0.05, rootMargin: '0px 0px -30px 0px' });
+      obs.observe(el);
+    });
+  }, 50);
 }
