@@ -425,6 +425,21 @@
             </div>
 
             <div class="dash-grid">
+                <!-- Streak Calendar -->
+                <div class="dcard dcard-full" data-anim>
+                    <div class="dcard-h"><span class="dcard-t">📅 学习日历</span><span class="dcard-sub">最近 90 天活动记录</span></div>
+                    <div class="streak-cal" id="streakCalendar"></div>
+                    <div class="streak-cal-legend">
+                        <span>少</span>
+                        <div class="scl-block" style="background:rgba(129,140,248,.05)"></div>
+                        <div class="scl-block" style="background:rgba(129,140,248,.2)"></div>
+                        <div class="scl-block" style="background:rgba(129,140,248,.4)"></div>
+                        <div class="scl-block" style="background:rgba(129,140,248,.7)"></div>
+                        <div class="scl-block" style="background:#818CF8"></div>
+                        <span>多</span>
+                    </div>
+                </div>
+
                 <div class="dcard dcard-full" data-anim>
                     <div class="dcard-h"><span class="dcard-t">📊 知识掌握热力图</span><span class="dcard-sub">颜色越亮掌握越好 · 点击查看详情</span></div>
                     <div class="heatmap-wrap" id="heatmapContainer"></div>
@@ -457,9 +472,11 @@
             <div class="pract-top">
                 <h1 class="pg-title">刷题练习</h1>
                 <div class="pract-pills">
+                    <span class="sp">XP <b id="sessionXP">0</b></span>
                     <span class="sp">本次 <b id="practiceCount">0</b></span>
                     <span class="sp sp-ok">✓ <b id="practiceCorrect">0</b></span>
                     <span class="sp"><b id="practiceRate">0%</b></span>
+                    <span class="sp">❌<b id="wrongCount">0</b></span>
                     <span class="sp">⏱<b id="practiceTimer">00:00</b></span>
                 </div>
             </div>

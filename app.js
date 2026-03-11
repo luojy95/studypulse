@@ -13,6 +13,8 @@ let timerInterval = null;
 let practiceStartTime = null;
 let currentPage = 'landing';
 let filteredProblems = [...MOCK_PROBLEMS];
+let wrongBook = []; // persisted wrong answers for 错题本
+let sessionXP = 0;
 
 // ══════════ INIT ══════════
 document.addEventListener('DOMContentLoaded', () => {
@@ -250,6 +252,7 @@ function initDashboard() {
   renderTrendChart();
   renderGoals();
   renderActivity(s);
+  renderStreakCalendar(s);
 
   setTimeout(() => {
     if (currentPage === 'dashboard' && s.weakAreas.length)
@@ -295,8 +298,15 @@ function renderWeakPoints(s) {
 
 function renderTrendChart() {
   const el = document.getElementById('trendChart');
+  const s = MOCK_STUDENTS[currentStudentIndex];
   const days = ['一', '二', '三', '四', '五', '六', '日'];
-  const rates = days.map(() => 40 + Math.random() * 45);
+  // Seed consistent data from student's correctRate
+  const baseRate = parseFloat(s.correctRate) * 100;
+  const seed = s.id.charCodeAt(3) + s.id.charCodeAt(4);
+  const rates = days.map((_, i) => {
+    const noise = Math.sin(seed + i * 1.7) * 12;
+    return Math.max(25, Math.min(95, baseRate + noise + (i * 1.5)));
+  });
   const max = Math.max(...rates);
   // Build SVG sparkline + bars
   const w = 100, h = 140, pad = 10;
@@ -404,8 +414,8 @@ function setPracticeMode(mode, btn) {
     showToast('🤖 AI 已推荐薄弱题目', 'success');
     triggerPopup('smartPractice');
   } else if (mode === 'wrong') {
-    filteredProblems = MOCK_PROBLEMS.filter(() => Math.random() > 0.7);
-    showToast('📝 错题集已加载', 'info');
+    filteredProblems = wrongBook.length > 0 ? [...wrongBook] : MOCK_PROBLEMS.filter(() => Math.random() > 0.7);
+    showToast(`📝 错题集：${wrongBook.length > 0 ? wrongBook.length + '道错题' : '暂无错题，显示随机题目'}`, 'info');
   } else if (mode === 'exam') {
     filteredProblems = MOCK_PROBLEMS.filter(() => Math.random() > 0.85);
     showToast('📝 模拟考：30题 60分钟', 'info');
@@ -454,33 +464,46 @@ function selectOption(btn, i) {
 
 function submitAnswer() {
   const p = filteredProblems[currentProblemIndex % filteredProblems.length];
-  const s = MOCK_STUDENTS[currentStudentIndex];
-  let kp = 0.5;
-  for (const topics of Object.values(s.mastery))
-    for (const pts of Object.values(topics))
-      if (pts[p.knowledgePoint]) kp = pts[p.knowledgePoint].level;
+  
+  // REAL validation: for multiple choice, option index 0 is always the correct answer in our data
+  // For other types, we accept any non-empty answer as correct (demo mode)
+  let ok = false;
+  if (p.type === '选择题' && p.options) {
+    if (selectedOption === null) { showToast('请先选择一个选项', 'error'); return; }
+    ok = (selectedOption === 0); // A is always correct in our generated data
+  } else {
+    const userInput = document.getElementById('answerInput').value.trim();
+    if (!userInput) { showToast('请输入答案', 'error'); return; }
+    ok = Math.random() < 0.6; // for non-MC, simulate with bias
+  }
 
-  const ok = Math.random() < (kp - p.difficulty + 0.55);
   const res = document.getElementById('problemResult');
   const hdr = document.getElementById('resultHeader');
   const exp = document.getElementById('resultExplanation');
   res.style.display = 'block';
   document.getElementById('submitBtn').style.display = 'none';
   document.getElementById('nextBtn').style.display = '';
+
   if (ok) {
     hdr.textContent = '✅ 回答正确！';
     hdr.className = 'p-result-banner ok';
     practiceCorrect++;
+    sessionXP += Math.round(10 + p.difficulty * 20);
     spawnConfetti();
+    showToast(`+${Math.round(10 + p.difficulty * 20)} XP`, 'success');
   } else {
     hdr.textContent = '❌ 回答错误';
     hdr.className = 'p-result-banner err';
+    // Add to wrong book
+    if (!wrongBook.find(w => w.id === p.id)) wrongBook.push(p);
     if (practiceCount > 0 && practiceCount % 3 === 0)
       setTimeout(() => triggerPopup('consecutive', p), 800);
   }
-  exp.innerHTML = `<strong>知识点：</strong>${p.knowledgePoint}<br><strong>答案：</strong>${p.answer}<br><strong>解析：</strong>${p.explanation}`;
+
+  exp.innerHTML = `<strong>知识点：</strong>${p.knowledgePoint}<br><strong>正确答案：</strong>${p.options ? p.options[0] : p.answer}<br><strong>解析：</strong>${p.explanation}`;
   if (p.type === '选择题') {
     document.querySelectorAll('.opt-btn').forEach((b, i) => {
+      b.style.pointerEvents = 'none'; // disable after submit
       if (i === 0) b.classList.add('correct');
       if (i === selectedOption && !ok) b.classList.add('wrong');
     });
@@ -525,6 +548,10 @@ function updatePracticeProgress() {
   document.getElementById('practiceRate').textContent = r + '%';
   const fill = document.getElementById('practiceFill');
   if (fill) fill.style.width = r + '%';
+  const xpEl = document.getElementById('sessionXP');
+  if (xpEl) xpEl.textContent = sessionXP;
+  const wc = document.getElementById('wrongCount');
+  if (wc) wc.textContent = wrongBook.length;
 }
 
 function startTimer() {
@@ -537,6 +564,27 @@ function startTimer() {
     const el = document.getElementById('practiceTimer');
     if (el) el.textContent = `${m}:${s}`;
   }, 1000);
+}
+
+// ══════════ STREAK CALENDAR ══════════
+function renderStreakCalendar(s) {
+  const el = document.getElementById('streakCalendar');
+  if (!el) return;
+  const seed = s.id.charCodeAt(3) * 7 + s.id.charCodeAt(4) * 13;
+  const today = new Date(2026, 2, 10);
+  let html = '';
+  for (let d = 89; d >= 0; d--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - d);
+    // Consistent activity level based on student + day
+    const daySeed = seed + d * 3 + date.getDay();
+    const active = (Math.sin(daySeed) * 0.5 + 0.5); // 0-1
+    const level = d < s.streak ? Math.max(0.2, active) : active * 0.7;
+    const alpha = level < 0.1 ? 0.03 : level < 0.3 ? 0.12 : level < 0.5 ? 0.3 : level < 0.7 ? 0.55 : 0.85;
+    const dateStr = `${date.getMonth()+1}/${date.getDate()}`;
+    html += `<div class="sc-day" style="background:rgba(129,140,248,${alpha})" title="${dateStr}: ${level < 0.1 ? '未学习' : Math.round(level*40)+'道题'}"></div>`;
+  }
+  el.innerHTML = html;
 }
 
 // ══════════ COMMUNITY ══════════
