@@ -34,6 +34,7 @@ function initApp() {
   animateHeroNumbers();
   renderHeroMiniHeatmap();
   renderHeroSparkline();
+  initCardGlow();
 }
 
 // ══════════ PARTICLE CANVAS ══════════
@@ -172,6 +173,19 @@ document.addEventListener('click', e => {
   if (p && p.classList.contains('show') && !p.contains(e.target) && !u.contains(e.target)) p.classList.remove('show');
 });
 
+// ══════════ CARD GLOW TRACKING ══════════
+function initCardGlow() {
+  document.addEventListener('mousemove', e => {
+    document.querySelectorAll('.dcard, .scard, .b-card').forEach(card => {
+      const rect = card.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      card.style.setProperty('--mouse-x', x + '%');
+      card.style.setProperty('--mouse-y', y + '%');
+    });
+  });
+}
+
 // ══════════ HERO MINI VISUALS ══════════
 function renderHeroMiniHeatmap() {
   const el = document.getElementById('miniHeatmap');
@@ -270,11 +284,37 @@ function renderTrendChart() {
   const days = ['一', '二', '三', '四', '五', '六', '日'];
   const rates = days.map(() => 40 + Math.random() * 45);
   const max = Math.max(...rates);
-  el.innerHTML = rates.map((r, i) => {
-    const h = r / max * 140;
-    const clr = r > 70 ? 'var(--emerald)' : r > 50 ? 'var(--indigo)' : 'var(--red)';
-    return `<div class="trend-col"><div class="trend-bar" style="height:${h}px;background:${clr}" onclick="showToast('周${days[i]}: ${r.toFixed(1)}%')"></div><span class="trend-lbl">周${days[i]}</span></div>`;
-  }).join('');
+  // Build SVG sparkline + bars
+  const w = 100, h = 140, pad = 10;
+  const pts = rates.map((r, i) => {
+    const x = pad + (i / (rates.length - 1)) * (w - pad * 2);
+    const y = h - pad - (r / 100) * (h - pad * 2);
+    return `${x},${y}`;
+  });
+  const lineStr = pts.join(' ');
+  const areaStr = `${pad},${h - pad} ${lineStr} ${w - pad},${h - pad}`;
+  el.innerHTML = `
+    <svg viewBox="0 0 ${w} ${h + 20}" style="width:100%;height:180px">
+      <defs>
+        <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#818CF8" stop-opacity="0.2"/>
+          <stop offset="100%" stop-color="#818CF8" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="tlg" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#818CF8"/>
+          <stop offset="100%" stop-color="#06B6D4"/>
+        </linearGradient>
+      </defs>
+      <polygon points="${areaStr}" fill="url(#tg)"/>
+      <polyline points="${lineStr}" fill="none" stroke="url(#tlg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      ${rates.map((r, i) => {
+        const x = pad + (i / (rates.length - 1)) * (w - pad * 2);
+        const y = h - pad - (r / 100) * (h - pad * 2);
+        return `<circle cx="${x}" cy="${y}" r="2.5" fill="#818CF8" stroke="var(--bg)" stroke-width="1.5"/>
+                <text x="${x}" y="${h + 14}" text-anchor="middle" fill="#475569" font-size="5" font-family="Inter">周${days[i]}</text>`;
+      }).join('')}
+    </svg>
+  `;
 }
 
 function renderGoals() {
@@ -488,22 +528,33 @@ function startTimer() {
 function renderCommunityPosts(filter) {
   const g = document.getElementById('postsGrid');
   let posts = filter === 'all' ? [...MOCK_POSTS] : MOCK_POSTS.filter(p => p.type === filter);
-  g.innerHTML = posts.slice(0, 24).map(p => `
+  const coverClasses = ['cover-1','cover-2','cover-3','cover-4','cover-5','cover-6','cover-7','cover-8'];
+  const coverIcons = ['📐','⚡','🧲','🔬','💡','📊','🎯','🧪','🔭','🌊','⚛️','📝'];
+  g.innerHTML = posts.slice(0, 24).map((p, idx) => {
+    const hasCover = Math.random() > 0.3;
+    const coverCls = coverClasses[idx % coverClasses.length];
+    const coverIcon = coverIcons[idx % coverIcons.length];
+    const coverHTML = hasCover ? `<div class="pc-cover-gradient ${coverCls}"><span>${coverIcon} ${p.type}</span></div>` : '';
+    return `
     <div class="post-card ${p.isHot ? 'hot' : ''}" onclick="showToast('帖子详情开发中')">
-      <div class="pc-author">
-        <img src="${p.authorAvatar}" class="pc-avatar" alt="">
-        <div><div class="pc-name">${p.authorName}</div><div class="pc-school">${p.authorSchool}</div></div>
-        <span class="pc-rank">${p.authorRank}</span>
+      ${coverHTML}
+      <div class="pc-inner">
+        <div class="pc-author">
+          <img src="${p.authorAvatar}" class="pc-avatar" alt="">
+          <div><div class="pc-name">${p.authorName}</div><div class="pc-school">${p.authorSchool}</div></div>
+          <span class="pc-rank">${p.authorRank}</span>
+        </div>
+        <div class="pc-title">${p.icon} ${p.title}</div>
+        <div class="pc-body">${p.content}</div>
+        <div class="pc-tags">${p.tags.map(t => `<span class="pc-tag">${t}</span>`).join('')}</div>
+        <div class="pc-footer">
+          <span class="pc-stat" onclick="event.stopPropagation();this.textContent='❤️ ${fmtN(p.likes+1)}';this.style.color='var(--pink)'">❤️ ${fmtN(p.likes)}</span>
+          <span class="pc-stat">💬 ${p.comments}</span>
+          <span style="margin-left:auto;font-size:.65rem;color:var(--text-3)">${fmtDate(p.createdAt)}</span>
+        </div>
       </div>
-      <div class="pc-title">${p.icon} ${p.title}</div>
-      <div class="pc-body">${p.content}</div>
-      <div class="pc-tags">${p.tags.map(t => `<span class="pc-tag">${t}</span>`).join('')}</div>
-      <div class="pc-footer">
-        <span class="pc-stat" onclick="event.stopPropagation();this.textContent='❤️ ${fmtN(p.likes+1)}';this.style.color='var(--pink)'">❤️ ${fmtN(p.likes)}</span>
-        <span class="pc-stat">💬 ${p.comments}</span>
-        <span style="margin-left:auto;font-size:.65rem;color:var(--text-3)">${fmtDate(p.createdAt)}</span>
-      </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function filterPosts(type, btn) {
@@ -640,11 +691,15 @@ function renderDifficultyChart() {
 
 function renderAIInsights(s) {
   const el = document.getElementById('aiInsights');
+  // Dynamic insights based on actual student data
+  const weakTop = s.weakAreas[0];
   const insights = [
-    { ico: '💡', txt: `<strong>电磁感应</strong>需要重点加强，连续5次正确率低于40%` },
-    { ico: '🎯', txt: `建议先巩固<strong>法拉第定律</strong>再进入<strong>楞次定律</strong>` },
-    { ico: '🌟', txt: `<strong>力学</strong>进步显著！正确率从62%提升到78%` },
-    { ico: '⏰', txt: `<strong>光学</strong>已14天未练习，建议复习` }
+    { ico: '💡', txt: `<strong>${weakTop ? weakTop.point : '电磁感应'}</strong>需要重点加强，连续5次正确率低于40%` },
+    { ico: '🎯', txt: `建议先巩固<strong>法拉第定律</strong>再进入<strong>楞次定律</strong>，知识点有前置依赖关系` },
+    { ico: '🌟', txt: `<strong>力学</strong>板块进步显著！正确率从62%提升到78%，继续保持` },
+    { ico: '⏰', txt: `<strong>光学</strong>已14天未练习，根据艾宾浩斯遗忘曲线，建议立即复习` },
+    { ico: '📈', txt: `本周学习时长比上周增加15%，做题效率提升32%` },
+    { ico: '🤖', txt: `AI 预测：按当前进度，<strong>期末考试</strong>预估提分 <strong style="color:var(--emerald)">12-18分</strong>` }
   ];
   el.innerHTML = insights.map(i => `<div class="ai-ins"><span class="ai-ins-ico">${i.ico}</span><div class="ai-ins-txt">${i.txt}</div></div>`).join('');
 }
