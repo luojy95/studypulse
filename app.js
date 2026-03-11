@@ -142,9 +142,12 @@ function showPage(page) {
   if (page === 'dashboard') initDashboard();
   if (page === 'practice') initPractice();
   if (page === 'wrongbook') initWrongBook();
+  if (page === 'daily') initDailyChallenge();
+  if (page === 'pk') initPK();
   if (page === 'ai') initAI();
   if (page === 'community') initCommunity();
   if (page === 'leaderboard') initLeaderboard();
+  if (page === 'parent') initParent();
   if (page === 'analytics') initAnalytics();
   document.getElementById('navLinks').classList.remove('open');
   reobserve();
@@ -1102,6 +1105,213 @@ function fmtDate(d) {
   if (diff < 1440) return Math.floor(diff / 60) + '小时前';
   if (diff < 10080) return Math.floor(diff / 1440) + '天前';
   return new Date(d).toLocaleDateString('zh-CN');
+}
+
+// ══════════ DAILY CHALLENGE 每日挑战 ══════════
+let dailyProblems = [];
+let dailyDone = 0;
+let dailySelections = [null, null, null];
+
+function initDailyChallenge() {
+  const s = MOCK_STUDENTS[currentStudentIndex];
+  // Pick 3 problems: 1 weak, 1 from wrong book, 1 stretch
+  const weak = s.weakAreas[0];
+  const weakP = MOCK_PROBLEMS.find(p => weak && p.knowledgePoint === weak.point && p.type === '选择题');
+  const wrongP = wrongBook.length > 0 ? wrongBook[0] : MOCK_PROBLEMS.find(p => p.type === '选择题' && p.difficulty > 0.5);
+  const stretchP = MOCK_PROBLEMS.find(p => p.type === '选择题' && p.difficulty > 0.7 && p !== weakP && p !== wrongP);
+  dailyProblems = [weakP || MOCK_PROBLEMS[0], wrongP || MOCK_PROBLEMS[1], stretchP || MOCK_PROBLEMS[2]];
+  dailyDone = 0;
+  dailySelections = [null, null, null];
+
+  document.getElementById('dpDone').textContent = '0';
+  document.getElementById('dpCircle').style.strokeDashoffset = '326.7';
+  document.getElementById('dpClassDone').textContent = rand2(25, 40);
+  document.getElementById('dailyShare').style.display = 'none';
+
+  const labels = ['薄弱知识点', '错题回顾', '拔高挑战'];
+  const typeColors = ['rgba(239,68,68,.1);color:var(--red)', 'rgba(245,158,11,.1);color:var(--amber)', 'rgba(129,140,248,.1);color:var(--violet)'];
+  document.getElementById('dailyCards').innerHTML = dailyProblems.map((p, i) => {
+    const opts = p.options || ['A. 选项A', 'B. 选项B', 'C. 选项C', 'D. 选项D'];
+    return `<div class="dc-card" id="dcCard${i}">
+      <div class="dc-card-head">
+        <div class="dc-card-num" id="dcNum${i}">${i + 1}</div>
+        <span class="dc-card-label">${labels[i]} · ${p.knowledgePoint}</span>
+        <span class="dc-card-type" style="background:${typeColors[i]}">${p.difficultyLabel}</span>
+      </div>
+      <div class="dc-card-q">${p.question}</div>
+      <div class="dc-card-opts">${opts.map((o, j) =>
+        `<button class="dc-opt" onclick="dailySelect(${i},${j},this)">${o}</button>`
+      ).join('')}</div>
+    </div>`;
+  }).join('');
+  startDailyTimer();
+}
+
+function dailySelect(cardIdx, optIdx, btn) {
+  if (dailySelections[cardIdx] !== null) return; // already answered
+  dailySelections[cardIdx] = optIdx;
+  const correct = optIdx === 0;
+  const card = document.getElementById('dcCard' + cardIdx);
+  const opts = card.querySelectorAll('.dc-opt');
+  opts.forEach((o, i) => {
+    o.style.pointerEvents = 'none';
+    if (i === 0) o.classList.add('correct');
+    if (i === optIdx && !correct) o.classList.add('wrong');
+  });
+  if (correct) {
+    dailyDone++;
+    document.getElementById('dcNum' + cardIdx).classList.add('done');
+    document.getElementById('dcNum' + cardIdx).textContent = '✓';
+    card.classList.add('done');
+    sessionXP += 15;
+    showToast('+15 XP', 'success');
+  } else {
+    if (!wrongBook.find(w => w.id === dailyProblems[cardIdx].id))
+      wrongBook.push(dailyProblems[cardIdx]);
+  }
+  document.getElementById('dpDone').textContent = dailyDone;
+  document.getElementById('dpCircle').style.strokeDashoffset = (326.7 * (1 - dailyDone / 3)).toFixed(1);
+  // Check if all done
+  if (dailySelections.every(s => s !== null)) {
+    showDailyResult();
+  }
+}
+
+function showDailyResult() {
+  const msgs = ['今天的你比昨天强了 0.5 个牛顿 🍎', '物理大佬就是你 ⚡', '继续保持，高考稳了 🎯', '知识点又被你消灭了一个 💪'];
+  document.getElementById('shareScore').textContent = dailyDone + '/3';
+  document.getElementById('shareMsg').textContent = msgs[Math.floor(Math.random() * msgs.length)];
+  document.getElementById('shareStreak').textContent = '🔥 连续 ' + MOCK_STUDENTS[currentStudentIndex].streak + ' 天';
+  document.getElementById('dailyShare').style.display = 'block';
+  if (dailyDone === 3) spawnConfetti();
+}
+
+function startDailyTimer() {
+  const el = document.getElementById('dcTimer');
+  let sec = 10710; // ~2h59m
+  setInterval(() => {
+    sec--;
+    if (sec < 0) sec = 0;
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }, 1000);
+}
+
+// ══════════ PK BATTLE 对战 ══════════
+let pkRound = 0, pkMyScore = 0, pkOpScore = 0, pkProblems = [], pkTimer = null;
+
+function initPK() {
+  document.getElementById('pkArena').style.display = 'none';
+  renderPKHistory();
+}
+
+function startPK(mode) {
+  const s = MOCK_STUDENTS[currentStudentIndex];
+  const op = MOCK_STUDENTS[(currentStudentIndex + rand2(1, 50)) % MOCK_STUDENTS.length];
+  document.getElementById('pkMyAvatar').src = s.avatar;
+  document.getElementById('pkMyName').textContent = s.name;
+  document.getElementById('pkOpAvatar').src = op.avatar;
+  document.getElementById('pkOpName').textContent = op.name;
+  pkMyScore = 0; pkOpScore = 0; pkRound = 0;
+  document.getElementById('pkMyScore').textContent = '0';
+  document.getElementById('pkOpScore').textContent = '0';
+  pkProblems = MOCK_PROBLEMS.filter(p => p.type === '选择题').sort(() => Math.random() - 0.5).slice(0, 5);
+  document.getElementById('pkArena').style.display = 'block';
+  document.querySelector('.pk-modes').style.display = 'none';
+  showToast('匹配成功！对战开始 ⚔️', 'success');
+  nextPKRound();
+}
+
+function nextPKRound() {
+  if (pkRound >= 5) { endPK(); return; }
+  const p = pkProblems[pkRound];
+  document.getElementById('pkRound').textContent = pkRound + 1;
+  document.getElementById('pkQuestion').textContent = p.question;
+  const opts = p.options || ['A','B','C','D'];
+  document.getElementById('pkOptions').innerHTML = opts.map((o, i) =>
+    `<button class="dc-opt" onclick="pkAnswer(${i},this)">${o}</button>`
+  ).join('');
+  // Timer
+  let t = 60;
+  document.getElementById('pkTimer').textContent = t;
+  if (pkTimer) clearInterval(pkTimer);
+  pkTimer = setInterval(() => { t--; document.getElementById('pkTimer').textContent = t; if (t <= 0) { clearInterval(pkTimer); pkAnswer(-1); }}, 1000);
+}
+
+function pkAnswer(idx, btn) {
+  if (pkTimer) clearInterval(pkTimer);
+  const correct = idx === 0;
+  const opts = document.querySelectorAll('#pkOptions .dc-opt');
+  opts.forEach((o, i) => { o.style.pointerEvents = 'none'; if (i === 0) o.classList.add('correct'); if (i === idx && !correct) o.classList.add('wrong'); });
+  if (correct) { pkMyScore++; sessionXP += 10; }
+  // Opponent AI
+  const opCorrect = Math.random() < 0.55;
+  if (opCorrect) pkOpScore++;
+  document.getElementById('pkMyScore').textContent = pkMyScore;
+  document.getElementById('pkOpScore').textContent = pkOpScore;
+  pkRound++;
+  setTimeout(nextPKRound, 1500);
+}
+
+function endPK() {
+  const won = pkMyScore > pkOpScore;
+  document.getElementById('pkQuestion').textContent = '';
+  document.getElementById('pkOptions').innerHTML = `<div style="text-align:center;padding:20px"><div style="font-size:2rem;margin-bottom:8px">${won ? '🎉 胜利！' : pkMyScore === pkOpScore ? '🤝 平局！' : '😤 惜败！'}</div><div style="font-size:1.2rem;font-weight:800">${pkMyScore} : ${pkOpScore}</div><div style="margin-top:12px;font-size:.85rem;color:var(--text-2)">+${pkMyScore * 10} XP</div><button class="btn btn-glow" onclick="initPK()" style="margin-top:16px">再来一局</button></div>`;
+  if (won) spawnConfetti();
+}
+
+function renderPKHistory() {
+  const el = document.getElementById('pkHistory');
+  const history = [];
+  for (let i = 0; i < 5; i++) {
+    const op = MOCK_STUDENTS[rand2(0, 50)];
+    const myS = rand2(1, 5), opS = rand2(1, 5);
+    history.push({ op, myS, opS, won: myS > opS });
+  }
+  el.innerHTML = history.map(h =>
+    `<div class="pk-h-item"><span class="pk-h-result ${h.won ? 'pk-h-win' : 'pk-h-lose'}">${h.won ? '胜' : '负'}</span><img src="${h.op.avatar}" style="width:24px;height:24px;border-radius:50%"><div class="pk-h-info">vs ${h.op.name}</div><span class="pk-h-score">${h.myS}:${h.opS}</span></div>`
+  ).join('');
+}
+
+// ══════════ PARENT DASHBOARD 家长端 ══════════
+function initParent() {
+  const s = MOCK_STUDENTS[currentStudentIndex];
+  document.getElementById('parentAvatar').src = s.avatar;
+  document.getElementById('parentChildName').textContent = s.name;
+  document.getElementById('parentChildSchool').textContent = s.school + ' · ' + s.grade + ' · ' + s.class;
+  document.getElementById('ptStudyTime').textContent = s.studyTime;
+  document.getElementById('ptStreak').textContent = s.streak;
+  document.getElementById('ptRank').textContent = '#' + rand2(5, 30);
+
+  const rate = parseFloat(s.correctRate);
+  document.getElementById('parentWeekly').innerHTML = `
+    <div class="pw-row"><span class="pw-label">本周做题</span><span class="pw-val">${rand2(60,150)} 道</span></div>
+    <div class="pw-row"><span class="pw-label">正确率</span><span class="pw-val up">${(rate*100).toFixed(1)}%（↑${rand2(2,8)}%）</span></div>
+    <div class="pw-row"><span class="pw-label">学习时长</span><span class="pw-val">${rand2(3,8)} 小时</span></div>
+    <div class="pw-row"><span class="pw-label">完成每日挑战</span><span class="pw-val up">${rand2(4,7)}/7 天</span></div>
+    <div class="pw-row"><span class="pw-label">学脉值排名</span><span class="pw-val">班级第 ${rand2(5,20)} 名</span></div>`;
+
+  const baseRate = rate * 100;
+  document.getElementById('parentTrend').innerHTML = `
+    <svg viewBox="0 0 200 80" style="width:100%;height:80px">
+      <defs><linearGradient id="ptg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10B981" stop-opacity=".2"/><stop offset="100%" stop-color="#10B981" stop-opacity="0"/></linearGradient></defs>
+      <polygon points="0,80 ${[0,1,2,3,4,5,6].map(i => `${i*33},${80 - (baseRate + Math.sin(i*1.3)*8 + i*2) * 0.8}`).join(' ')} 200,80" fill="url(#ptg)"/>
+      <polyline points="${[0,1,2,3,4,5,6].map(i => `${i*33},${80 - (baseRate + Math.sin(i*1.3)*8 + i*2) * 0.8}`).join(' ')}" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <div style="font-size:.72rem;color:var(--text-3);text-align:center">最近7天正确率趋势 — 稳步提升 📈</div>`;
+
+  const weak = s.weakAreas.slice(0, 3);
+  document.getElementById('parentAlerts').innerHTML = weak.map(w =>
+    `<div class="pa-item">⚠️ 「${w.point}」掌握度仅 ${(w.mastery*100).toFixed(0)}%，建议加强练习</div>`
+  ).join('') + `<div class="pa-item good">✅ 连续 ${s.streak} 天学习打卡，学习习惯良好</div>`;
+
+  document.getElementById('parentHighlights').innerHTML = `
+    <div class="ph-item">🌟 本周最大进步：「${weak[0] ? weak[0].topic : '力学'}」正确率提升 ${rand2(10,25)}%</div>
+    <div class="ph-item">🏆 PK对战胜率 ${rand2(55,80)}%</div>
+    <div class="ph-item">📝 在学脉圈发布了 ${rand2(1,5)} 篇学习笔记</div>
+    <div class="ph-item">🎯 完成了 ${rand2(2,4)} 个知识点的专项突破</div>`;
 }
 
 // ══════════ WRONG BOOK 错题本 ══════════
