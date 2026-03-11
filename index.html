@@ -205,13 +205,41 @@
                     <h2>四步开启智能学习</h2>
                 </div>
                 <div class="steps-row">
-                    <div class="step-item" data-anim><div class="step-n">01</div><h4>做题</h4><p>系统自动采集做题数据</p></div>
-                    <div class="step-line"></div>
-                    <div class="step-item" data-anim><div class="step-n">02</div><h4>AI 分析</h4><p>实时更新知识画像</p></div>
-                    <div class="step-line"></div>
-                    <div class="step-item" data-anim><div class="step-n">03</div><h4>精准推荐</h4><p>ZPD 理论最优路径</p></div>
-                    <div class="step-line"></div>
-                    <div class="step-item" data-anim><div class="step-n">04</div><h4>社区激励</h4><p>分享成就持续学习</p></div>
+                    <div class="step-item" data-anim>
+                        <div class="step-icon">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="24" height="24" rx="4" stroke="#818CF8" stroke-width="2"/><path d="M10 16h12M16 10v12" stroke="#818CF8" stroke-width="2" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="step-n">01</div>
+                        <h4>做题</h4>
+                        <p>在题库中练习，系统自动采集每次答题的正误、耗时和知识点数据</p>
+                    </div>
+                    <div class="step-connector"><svg viewBox="0 0 60 8"><path d="M0 4h60" stroke="url(#g1)" stroke-width="1.5" stroke-dasharray="4 3" opacity=".4"/></svg></div>
+                    <div class="step-item" data-anim>
+                        <div class="step-icon">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="10" stroke="#06B6D4" stroke-width="2"/><path d="M16 10v6l4 2" stroke="#06B6D4" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="16" r="2" fill="#06B6D4"/></svg>
+                        </div>
+                        <div class="step-n">02</div>
+                        <h4>AI 分析</h4>
+                        <p>Pulse Engine 实时更新知识画像，贝叶斯模型计算掉握每个知识点的掌握概率</p>
+                    </div>
+                    <div class="step-connector"><svg viewBox="0 0 60 8"><path d="M0 4h60" stroke="url(#g1)" stroke-width="1.5" stroke-dasharray="4 3" opacity=".4"/></svg></div>
+                    <div class="step-item" data-anim>
+                        <div class="step-icon">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M8 24l8-12 4 6 8-10" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="10" r="3" fill="#EC4899" opacity=".3"/></svg>
+                        </div>
+                        <div class="step-n">03</div>
+                        <h4>精准推荐</h4>
+                        <p>基于 ZPD 理论推荐略高于当前水平的题目，三路召回+排序算法优化</p>
+                    </div>
+                    <div class="step-connector"><svg viewBox="0 0 60 8"><path d="M0 4h60" stroke="url(#g1)" stroke-width="1.5" stroke-dasharray="4 3" opacity=".4"/></svg></div>
+                    <div class="step-item" data-anim>
+                        <div class="step-icon">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="12" cy="14" r="5" stroke="#F59E0B" stroke-width="2"/><circle cx="22" cy="14" r="5" stroke="#F59E0B" stroke-width="2"/><path d="M6 26c0-3 3-5.5 6-5.5s6 2.5 6 5.5" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" opacity=".5"/><path d="M18 26c0-3 3-5.5 6-5.5" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" opacity=".3"/></svg>
+                        </div>
+                        <div class="step-n">04</div>
+                        <h4>社区激励</h4>
+                        <p>分享解题笔记、打卡成就，在学脉圈中获得持续学习动力</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -336,9 +364,13 @@
 
         <section class="cta-section">
             <div class="cta-glow"></div>
+            <div class="cta-border"></div>
             <h2>准备开始智能学习之旅了吗？</h2>
-            <p>加入 StudyPulse 学脉，让 AI 成为你最好的学习伙伴</p>
-            <button class="btn btn-glow btn-lg" onclick="showPage('dashboard')">免费开始 →</button>
+            <p>加入 2400万高中生的智能学习平台，让 AI 成为你最好的学习伙伴</p>
+            <div class="cta-btns">
+                <button class="btn btn-glow btn-lg" onclick="showPage('dashboard')">免费开始 →</button>
+                <button class="btn btn-glass btn-lg" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">查看方案</button>
+            </div>
         </section>
 
         <!-- Footer -->
@@ -614,6 +646,11 @@
         <div class="usr-panel-h">切换用户（演示）</div>
         <div id="userList"></div>
     </div>
+
+    <!-- Back to top -->
+    <button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 12V4M4 7l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
 
     <script src="data.js"></script>
     <script src="app.js"></script>

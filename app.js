@@ -120,11 +120,11 @@ function initScrollObserver() {
 }
 
 function initNavScroll() {
-  let last = 0;
   window.addEventListener('scroll', () => {
     const y = window.scrollY;
     document.getElementById('navbar').classList.toggle('scrolled', y > 20);
-    last = y;
+    const btt = document.getElementById('backToTop');
+    if (btt) btt.classList.toggle('show', y > 400);
   }, { passive: true });
 }
 
