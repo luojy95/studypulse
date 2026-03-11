@@ -711,6 +711,7 @@ function filterPosts(type, btn) {
 function openPostDetail(post) {
   currentDetailPost = post;
   const modal = document.getElementById('postDetailModal');
+  document.body.style.overflow = 'hidden';
   const coverClasses = ['cover-1','cover-2','cover-3','cover-4','cover-5','cover-6','cover-7','cover-8'];
   const coverEmojis = ['📐','⚡','🧲','🔬','💡','📊','🎯','🧪'];
   const hash = post.id.charCodeAt(1) + post.id.charCodeAt(2);
@@ -759,6 +760,7 @@ function openPostDetail(post) {
 function closePostDetail(e) {
   if (e && e.target !== e.currentTarget) return;
   document.getElementById('postDetailModal').classList.remove('show');
+  document.body.style.overflow = '';
 }
 
 function addComment() {
