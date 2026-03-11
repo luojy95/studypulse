@@ -125,6 +125,7 @@ function showPage(page) {
   currentPage = page;
   if (page === 'dashboard') initDashboard();
   if (page === 'practice') initPractice();
+  if (page === 'community') initCommunity();
   if (page === 'analytics') initAnalytics();
   document.getElementById('navLinks').classList.remove('open');
   // Re-observe new elements
@@ -525,42 +526,191 @@ function startTimer() {
 }
 
 // ══════════ COMMUNITY ══════════
+let commPostsShown = 0;
+let commCurrentFilter = 'all';
+let commSearchQuery = '';
+let currentDetailPost = null;
+
+function getFilteredComm() {
+  let posts = commCurrentFilter === 'all' ? [...MOCK_POSTS] : MOCK_POSTS.filter(p => p.type === commCurrentFilter);
+  if (commSearchQuery) {
+    const q = commSearchQuery.toLowerCase();
+    posts = posts.filter(p => p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q) || p.tags.some(t => t.toLowerCase().includes(q)));
+  }
+  return posts;
+}
+
+function initCommunity() {
+  const s = MOCK_STUDENTS[currentStudentIndex];
+  const el = id => document.getElementById(id);
+  el('commAvatar').src = s.avatar;
+  el('commName').textContent = s.name;
+  el('commSchool').textContent = s.school + ' · ' + s.grade;
+  el('commMyPosts').textContent = rand2(5, 30);
+  el('commMyLikes').textContent = fmtN(rand2(100, 5000));
+  el('commMyFollowers').textContent = rand2(20, 200);
+  el('commPostCount').textContent = MOCK_POSTS.length;
+  el('commUserCount').textContent = MOCK_STUDENTS.length;
+  el('commTodayCount').textContent = rand2(30, 80);
+  el('commLikeCount').textContent = fmtN(MOCK_POSTS.reduce((s, p) => s + p.likes, 0));
+}
+function rand2(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
 function renderCommunityPosts(filter) {
+  commCurrentFilter = filter;
+  commPostsShown = 0;
+  document.getElementById('postsGrid').innerHTML = '';
+  loadMorePosts();
+  if (typeof initCommunity === 'function') initCommunity();
+}
+
+function loadMorePosts() {
   const g = document.getElementById('postsGrid');
-  let posts = filter === 'all' ? [...MOCK_POSTS] : MOCK_POSTS.filter(p => p.type === filter);
+  const posts = getFilteredComm();
+  const batch = posts.slice(commPostsShown, commPostsShown + 24);
   const coverClasses = ['cover-1','cover-2','cover-3','cover-4','cover-5','cover-6','cover-7','cover-8'];
-  const coverIcons = ['📐','⚡','🧲','🔬','💡','📊','🎯','🧪','🔭','🌊','⚛️','📝'];
-  g.innerHTML = posts.slice(0, 24).map((p, idx) => {
-    const hasCover = Math.random() > 0.3;
-    const coverCls = coverClasses[idx % coverClasses.length];
-    const coverIcon = coverIcons[idx % coverIcons.length];
-    const coverHTML = hasCover ? `<div class="pc-cover-gradient ${coverCls}"><span>${coverIcon} ${p.type}</span></div>` : '';
-    return `
-    <div class="post-card ${p.isHot ? 'hot' : ''}" onclick="showToast('帖子详情开发中')">
-      ${coverHTML}
-      <div class="pc-inner">
-        <div class="pc-author">
-          <img src="${p.authorAvatar}" class="pc-avatar" alt="">
-          <div><div class="pc-name">${p.authorName}</div><div class="pc-school">${p.authorSchool}</div></div>
-          <span class="pc-rank">${p.authorRank}</span>
-        </div>
-        <div class="pc-title">${p.icon} ${p.title}</div>
-        <div class="pc-body">${p.content}</div>
-        <div class="pc-tags">${p.tags.map(t => `<span class="pc-tag">${t}</span>`).join('')}</div>
-        <div class="pc-footer">
-          <span class="pc-stat" onclick="event.stopPropagation();this.textContent='❤️ ${fmtN(p.likes+1)}';this.style.color='var(--pink)'">❤️ ${fmtN(p.likes)}</span>
-          <span class="pc-stat">💬 ${p.comments}</span>
-          <span style="margin-left:auto;font-size:.65rem;color:var(--text-3)">${fmtDate(p.createdAt)}</span>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  const coverEmojis = ['📐','⚡','🧲','🔬','💡','📊','🎯','🧪','🔭','🌊','⚛️','📝','🧠','📈','✏️','🔑'];
+  const typeClassMap = {'解题笔记':'pc-type-note','错题分析':'pc-type-wrong','打卡成就':'pc-type-streak','求助帖':'pc-type-help','经验分享':'pc-type-exp'};
+
+  batch.forEach((p, idx) => {
+    const i = commPostsShown + idx;
+    const hasCover = p.images > 0 || i % 3 !== 2;
+    const coverCls = coverClasses[i % coverClasses.length];
+    const coverEmoji = coverEmojis[i % coverEmojis.length];
+    const typeCls = typeClassMap[p.type] || 'pc-type-note';
+
+    const card = document.createElement('div');
+    card.className = 'post-card' + (p.isHot ? ' hot' : '');
+    card.onclick = () => openPostDetail(p);
+
+    let html = '';
+    if (hasCover) {
+      html += `<div class="pc-cover-gradient ${coverCls}"><span>${coverEmoji} ${p.type}</span></div>`;
+    }
+    html += `<div class="pc-inner">`;
+    html += `<span class="pc-type-badge ${typeCls}">${p.icon} ${p.type}</span>`;
+    html += `<div class="pc-title">${p.title}</div>`;
+    html += `<div class="pc-body">${p.content}</div>`;
+    html += `<div class="pc-tags">${p.tags.map(t => `<span class="pc-tag" onclick="event.stopPropagation();searchByTag('${t}')">#${t}</span>`).join('')}</div>`;
+    html += `<div class="pc-author"><img src="${p.authorAvatar}" class="pc-avatar" alt=""><div><div class="pc-name">${p.authorName}</div><div class="pc-school">${p.authorSchool}</div></div><span class="pc-rank">${p.authorRank}</span></div>`;
+    html += `<div class="pc-footer">`;
+    html += `<span class="pc-stat" onclick="event.stopPropagation();likePost(this,${p.likes})">❤️ ${fmtN(p.likes)}</span>`;
+    html += `<span class="pc-stat">💬 ${p.comments}</span>`;
+    html += `<span class="pc-stat">⭐ ${fmtN(p.bookmarks || 0)}</span>`;
+    html += `<span class="pc-views">👁 ${fmtN(p.views || 0)}</span>`;
+    html += `</div></div>`;
+
+    card.innerHTML = html;
+    g.appendChild(card);
+  });
+
+  commPostsShown += batch.length;
+  const loadBtn = document.getElementById('commLoadMore');
+  if (loadBtn) loadBtn.style.display = commPostsShown >= posts.length ? 'none' : 'block';
+}
+
+function likePost(el, current) {
+  el.classList.add('liked');
+  el.innerHTML = `❤️ ${fmtN(current + 1)}`;
+  el.style.transform = 'scale(1.3)';
+  setTimeout(() => { el.style.transform = ''; }, 200);
+}
+
+function searchPosts(query) {
+  commSearchQuery = query;
+  renderCommunityPosts(commCurrentFilter);
+}
+
+function searchByTag(tag) {
+  const input = document.getElementById('commSearch');
+  if (input) input.value = tag;
+  commSearchQuery = tag;
+  renderCommunityPosts(commCurrentFilter);
+  showToast(`搜索: ${tag}`, 'info');
 }
 
 function filterPosts(type, btn) {
   document.querySelectorAll('.ctab').forEach(t => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  commSearchQuery = '';
+  const input = document.getElementById('commSearch');
+  if (input) input.value = '';
   renderCommunityPosts(type);
+}
+
+// Post Detail Modal
+function openPostDetail(post) {
+  currentDetailPost = post;
+  const modal = document.getElementById('postDetailModal');
+  const coverClasses = ['cover-1','cover-2','cover-3','cover-4','cover-5','cover-6','cover-7','cover-8'];
+  const coverEmojis = ['📐','⚡','🧲','🔬','💡','📊','🎯','🧪'];
+  const hash = post.id.charCodeAt(1) + post.id.charCodeAt(2);
+  const coverCls = coverClasses[hash % coverClasses.length];
+  const coverEmoji = coverEmojis[hash % coverEmojis.length];
+
+  document.getElementById('pdCover').className = 'pd-cover ' + coverCls;
+  document.getElementById('pdCover').innerHTML = `<span style="position:relative;z-index:1">${coverEmoji}</span>`;
+  document.getElementById('pdContent').innerHTML = `<h2 style="font-size:1.2rem;font-weight:800;margin-bottom:16px;color:var(--text)">${post.icon} ${post.title}</h2><div style="white-space:pre-wrap;line-height:1.85">${post.content}</div>`;
+
+  document.getElementById('pdAuthor').innerHTML = `
+    <img src="${post.authorAvatar}" alt="">
+    <div class="pd-author-info">
+      <div class="pd-a-name">${post.authorName}</div>
+      <div class="pd-a-school">${post.authorSchool} · ${post.authorGrade || ''}</div>
+      <span class="pd-a-rank">${post.authorRank}</span>
+    </div>`;
+
+  document.getElementById('pdMeta').innerHTML = `
+    <span class="pd-meta-item">👁 ${fmtN(post.views || 0)} 浏览</span>
+    <span class="pd-meta-item">⭐ ${fmtN(post.bookmarks || 0)} 收藏</span>
+    <span class="pd-meta-item">📅 ${fmtDate(post.createdAt)}</span>
+    ${post.tags.map(t => `<span class="pc-tag">#${t}</span>`).join('')}`;
+
+  document.getElementById('pdActions').innerHTML = `
+    <button class="pd-action-btn" onclick="this.classList.toggle('active');this.innerHTML=this.classList.contains('active')?'❤️ ${fmtN(post.likes+1)}':'🤍 ${fmtN(post.likes)}'">🤍 ${fmtN(post.likes)}</button>
+    <button class="pd-action-btn" onclick="this.classList.toggle('active')">⭐ 收藏</button>
+    <button class="pd-action-btn" onclick="showToast('已复制链接','success')">🔗 分享</button>`;
+
+  document.getElementById('pdCommentCount').textContent = post.comments;
+
+  const cl = post.commentsList || [];
+  document.getElementById('pdComments').innerHTML = cl.map(c => `
+    <div class="pd-comment">
+      <img src="${c.authorAvatar}" alt="">
+      <div class="pd-comment-body">
+        <div class="pd-comment-name">${c.authorName}</div>
+        <div class="pd-comment-text">${c.content}</div>
+        <div class="pd-comment-meta"><span>${c.time}</span><span>❤️ ${fmtN(c.likes)}</span></div>
+      </div>
+    </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--text-3);font-size:.85rem">暂无评论，快来第一个评论吧 ✍️</div>';
+
+  modal.classList.add('show');
+}
+
+function closePostDetail(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('postDetailModal').classList.remove('show');
+}
+
+function addComment() {
+  const input = document.getElementById('pdCommentInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const s = MOCK_STUDENTS[currentStudentIndex];
+  const commentsEl = document.getElementById('pdComments');
+  const newComment = document.createElement('div');
+  newComment.className = 'pd-comment';
+  newComment.style.animation = 'fadeSlideUp .3s ease';
+  newComment.innerHTML = `
+    <img src="${s.avatar}" alt="">
+    <div class="pd-comment-body">
+      <div class="pd-comment-name">${s.name}</div>
+      <div class="pd-comment-text">${text}</div>
+      <div class="pd-comment-meta"><span>刚刚</span><span>❤️ 0</span></div>
+    </div>`;
+  commentsEl.insertBefore(newComment, commentsEl.firstChild);
+  input.value = '';
+  showToast('💬 评论发布成功', 'success');
 }
 
 function renderLeaderboard() {

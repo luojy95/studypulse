@@ -464,10 +464,27 @@
     <!-- ==================== COMMUNITY ==================== -->
     <div class="page" id="page-community">
         <div class="pg">
+            <!-- Top bar -->
             <div class="comm-top">
                 <h1 class="pg-title">学脉圈</h1>
-                <button class="btn btn-glow" onclick="showNewPostModal()">+ 发帖</button>
+                <div class="comm-top-right">
+                    <div class="comm-search">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        <input type="text" placeholder="搜索帖子、话题..." id="commSearch" oninput="searchPosts(this.value)">
+                    </div>
+                    <button class="btn btn-glow" onclick="showNewPostModal()">+ 发帖</button>
+                </div>
             </div>
+
+            <!-- Stats bar -->
+            <div class="comm-stats">
+                <div class="cs-item"><span class="cs-val" id="commPostCount">0</span><span class="cs-lab">帖子</span></div>
+                <div class="cs-item"><span class="cs-val" id="commUserCount">0</span><span class="cs-lab">活跃用户</span></div>
+                <div class="cs-item"><span class="cs-val" id="commTodayCount">0</span><span class="cs-lab">今日新帖</span></div>
+                <div class="cs-item"><span class="cs-val" id="commLikeCount">0</span><span class="cs-lab">总点赞</span></div>
+            </div>
+
+            <!-- Tabs -->
             <div class="comm-tabs">
                 <button class="ctab active" onclick="filterPosts('all',this)">🔥 推荐</button>
                 <button class="ctab" onclick="filterPosts('解题笔记',this)">📝 笔记</button>
@@ -476,27 +493,76 @@
                 <button class="ctab" onclick="filterPosts('求助帖',this)">❓ 求助</button>
                 <button class="ctab" onclick="filterPosts('经验分享',this)">✨ 经验</button>
             </div>
+
             <div class="comm-layout">
-                <div class="posts-grid" id="postsGrid"></div>
+                <div class="posts-masonry" id="postsGrid"></div>
                 <aside class="comm-side">
+                    <!-- User card -->
+                    <div class="side-card side-user" data-anim>
+                        <div class="su-row">
+                            <img src="" class="su-avatar" id="commAvatar" alt="">
+                            <div>
+                                <div class="su-name" id="commName"></div>
+                                <div class="su-school" id="commSchool"></div>
+                            </div>
+                        </div>
+                        <div class="su-stats">
+                            <div><strong id="commMyPosts">0</strong><span>帖子</span></div>
+                            <div><strong id="commMyLikes">0</strong><span>获赞</span></div>
+                            <div><strong id="commMyFollowers">0</strong><span>关注</span></div>
+                        </div>
+                    </div>
+                    <!-- Hot topics -->
                     <div class="side-card" data-anim>
                         <h3>🔥 热门话题</h3>
-                        <a href="#" class="ht">#向心力专题<span>1.2k</span></a>
-                        <a href="#" class="ht">#高考倒计时<span>892</span></a>
-                        <a href="#" class="ht">#电磁感应<span>756</span></a>
-                        <a href="#" class="ht">#实验技巧<span>634</span></a>
-                        <a href="#" class="ht">#错题本<span>521</span></a>
+                        <a href="#" class="ht" onclick="searchByTag('向心力');return false"><span class="ht-num">1</span>#向心力专题<span>1.2k</span></a>
+                        <a href="#" class="ht" onclick="searchByTag('电磁感应');return false"><span class="ht-num">2</span>#电磁感应<span>892</span></a>
+                        <a href="#" class="ht" onclick="searchByTag('动能定理');return false"><span class="ht-num">3</span>#动能定理<span>756</span></a>
+                        <a href="#" class="ht" onclick="searchByTag('受力分析');return false"><span class="ht-num">4</span>#受力分析<span>634</span></a>
+                        <a href="#" class="ht" onclick="searchByTag('动量');return false"><span class="ht-num">5</span>#动量守恒<span>521</span></a>
+                        <a href="#" class="ht" onclick="searchByTag('光学');return false"><span class="ht-num">6</span>#光学总结<span>483</span></a>
+                        <a href="#" class="ht" onclick="searchByTag('实验');return false"><span class="ht-num">7</span>#实验技巧<span>412</span></a>
                     </div>
+                    <!-- Leaderboard -->
                     <div class="side-card" data-anim>
-                        <h3>🏆 排行</h3>
+                        <h3>🏆 学脉值排行</h3>
                         <div id="leaderboard"></div>
                     </div>
+                    <!-- Announcements -->
                     <div class="side-card" data-anim>
                         <h3>📢 公告</h3>
-                        <div class="ann"><span class="ann-tag new">NEW</span>AI推荐算法升级</div>
-                        <div class="ann"><span class="ann-tag ev">活动</span>百日冲刺赢Pro</div>
+                        <div class="ann"><span class="ann-tag new">NEW</span>学脉圈2.0上线！支持图文笔记</div>
+                        <div class="ann"><span class="ann-tag ev">活动</span>高考百日冲刺打卡，赢Pro会员</div>
+                        <div class="ann"><span class="ann-tag new">NEW</span>AI写作助手：一键生成解题笔记</div>
                     </div>
                 </aside>
+            </div>
+
+            <!-- Load more -->
+            <div class="comm-loadmore" id="commLoadMore">
+                <button class="btn btn-glass" onclick="loadMorePosts()">加载更多</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Post Detail Modal -->
+    <div class="modal-bg" id="postDetailModal" onclick="closePostDetail(event)">
+        <div class="post-detail" onclick="event.stopPropagation()">
+            <button class="pd-close" onclick="closePostDetail()">✕</button>
+            <div class="pd-main">
+                <div class="pd-cover" id="pdCover"></div>
+                <div class="pd-content" id="pdContent"></div>
+            </div>
+            <div class="pd-sidebar">
+                <div class="pd-author" id="pdAuthor"></div>
+                <div class="pd-meta" id="pdMeta"></div>
+                <div class="pd-actions" id="pdActions"></div>
+                <div class="pd-comments-header">💬 评论 <span id="pdCommentCount"></span></div>
+                <div class="pd-comments" id="pdComments"></div>
+                <div class="pd-comment-input">
+                    <input type="text" placeholder="说点什么..." id="pdCommentInput">
+                    <button class="btn btn-glow btn-sm" onclick="addComment()">发送</button>
+                </div>
             </div>
         </div>
     </div>
