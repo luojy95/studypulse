@@ -820,11 +820,12 @@ function addComment() {
   const newComment = document.createElement('div');
   newComment.className = 'pd-comment';
   newComment.style.animation = 'fadeSlideUp .3s ease';
+  const safeText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   newComment.innerHTML = `
     <img src="${s.avatar}" alt="">
     <div class="pd-comment-body">
       <div class="pd-comment-name">${s.name}</div>
-      <div class="pd-comment-text">${text}</div>
+      <div class="pd-comment-text">${safeText}</div>
       <div class="pd-comment-meta"><span>刚刚</span><span>❤️ 0</span></div>
     </div>`;
   commentsEl.insertBefore(newComment, commentsEl.firstChild);
@@ -846,8 +847,8 @@ function closeNewPostModal(e) { if (e && e.target !== e.currentTarget) return; d
 function toggleTag(b) { b.classList.toggle('active'); }
 
 function submitPost() {
-  const title = document.getElementById('postTitle').value;
-  const content = document.getElementById('postContent').value;
+  const title = document.getElementById('postTitle').value.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const content = document.getElementById('postContent').value.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   if (!title || !content) { showToast('请填写标题和内容', 'error'); return; }
   closeNewPostModal();
   showToast('🎉 发布成功！', 'success');
@@ -868,7 +869,7 @@ function initAnalytics() {
   const s = MOCK_STUDENTS[currentStudentIndex];
   document.getElementById('anaTotal').textContent = fmtN(s.totalProblems);
   document.getElementById('anaRate').textContent = (parseFloat(s.correctRate) * 100).toFixed(1) + '%';
-  document.getElementById('anaTime').textContent = Math.floor(s.studyTime / 60) + 'h';
+  document.getElementById('anaTime').textContent = s.studyTime + 'min';
   document.getElementById('anaWeak').textContent = s.weakAreas.length;
   renderCategoryChart(s);
   renderRadarChart(s);
