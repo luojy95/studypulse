@@ -141,7 +141,10 @@ function showPage(page) {
   currentPage = page;
   if (page === 'dashboard') initDashboard();
   if (page === 'practice') initPractice();
+  if (page === 'wrongbook') initWrongBook();
+  if (page === 'ai') initAI();
   if (page === 'community') initCommunity();
+  if (page === 'leaderboard') initLeaderboard();
   if (page === 'analytics') initAnalytics();
   document.getElementById('navLinks').classList.remove('open');
   reobserve();
@@ -1099,6 +1102,160 @@ function fmtDate(d) {
   if (diff < 1440) return Math.floor(diff / 60) + '小时前';
   if (diff < 10080) return Math.floor(diff / 1440) + '天前';
   return new Date(d).toLocaleDateString('zh-CN');
+}
+
+// ══════════ WRONG BOOK 错题本 ══════════
+function initWrongBook() {
+  const el = document.getElementById('wbContent');
+  document.getElementById('wbTotal').textContent = wrongBook.length;
+  const mastered = Math.floor(wrongBook.length * 0.2);
+  document.getElementById('wbMastered').textContent = mastered;
+  document.getElementById('wbRemaining').textContent = wrongBook.length - mastered;
+  renderWBList('all');
+}
+
+function filterWB(cat, btn) {
+  document.querySelectorAll('.wb-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderWBList(cat);
+}
+
+function renderWBList(cat) {
+  const el = document.getElementById('wbContent');
+  let items = wrongBook.length > 0 ? [...wrongBook] : MOCK_PROBLEMS.slice(0, 15); // show sample if empty
+  if (cat !== 'all') items = items.filter(p => p.category === cat);
+
+  if (items.length === 0 && wrongBook.length === 0) {
+    el.innerHTML = `<div class="wb-empty"><div class="wb-empty-icon">📕</div><div class="wb-empty-text">错题本是空的</div><div class="wb-empty-sub">去做题吧，做错的题会自动收集到这里</div><button class="btn btn-glow" onclick="showPage('practice')">开始做题 →</button></div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="wb-list">${items.map((p, i) => {
+    const isMastered = i < items.length * 0.2;
+    return `<div class="wb-item" onclick="showPage('practice');setTimeout(()=>{loadSpecific('${p.id}')},300)">
+      <div class="wb-item-status ${isMastered ? 'mastered' : 'wrong'}"></div>
+      <div class="wb-item-info">
+        <div class="wb-item-title">${p.knowledgePoint} — ${p.type}</div>
+        <div class="wb-item-meta">${p.category} · ${p.topic} · ${p.difficultyLabel}</div>
+      </div>
+      <div class="wb-item-tags">
+        <span style="background:rgba(239,68,68,.08);color:var(--red)">${p.difficultyLabel}</span>
+        <span style="background:rgba(129,140,248,.08);color:var(--violet)">${p.category}</span>
+      </div>
+      <div class="wb-item-action">${isMastered ? '✅ 已掌握' : '→ 重做'}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ══════════ AI TUTOR ══════════
+const AI_RESPONSES = {
+  '向心力': '向心力不是一种新的力！它是合力在径向方向上的分量。\n\n核心公式：F向 = mv²/r = mω²r\n\n关键理解：\n1. 向心力由其他力（重力、弹力、摩擦力等）提供\n2. 离心力是非惯性系中的惯性力，在惯性系中不存在\n3. 做圆周运动的物体，合力必须指向圆心\n\n常见题型：竖直面圆周（绳/杆模型）、水平面圆周、圆锥摆',
+  '薄弱': '根据你的数据分析：\n\n⚠️ 需要重点关注的知识点：\n1. 向心力 — 掌握度 23%（建议立即练习）\n2. 电磁感应 — 掌握度 35%\n3. 动量守恒 — 掌握度 41%\n\n✅ 你的优势知识点：\n1. 牛顿第二定律 — 82%\n2. 功和能 — 78%\n\n📋 建议：先从向心力的基础题开始，每天做10道，预计1周可提升到60%以上。',
+  '楞次': '楞次定律的核心：感应电流的效果总是"阻碍"引起它的原因。\n\n快速判断方法：\n1. 确定原磁通量的变化方向（增大or减小）\n2. "增反减同"：增大→感应磁场与原磁场反向；减小→同向\n3. 用右手定则由感应磁场方向→感应电流方向\n\n⚡ 记忆口诀：来拒去留、增反减同\n\n常见陷阱：注意区分"磁通量变化方向"和"磁场方向"！',
+  '动量': '动量守恒定律：p₁ + p₂ = p₁\' + p₂\'（合外力为零时）\n\n解题步骤：\n1. 判断系统是否满足动量守恒条件\n2. 选正方向\n3. 列动量守恒方程\n4. ⚠️ 验证结果合理性（动能不增加）\n\n碰撞类型：\n• 完全弹性：动量+动能都守恒\n• 完全非弹性：碰后粘在一起\n• 一般碰撞：动量守恒，动能减少',
+  '电磁感应': '电磁感应解题"一法二律"：\n\n一法：法拉第定律 ε = NΔΦ/Δt\n二律：楞次定律（定方向）+ 欧姆定律（定电流）\n\n完整解题流程：\n① 判断磁通量是否变化\n② 用楞次定律确定感应电流方向\n③ 用法拉第定律计算EMF\n④ 用欧姆定律计算电流 I = ε/(R+r)\n⑤ 如需要，计算安培力 F = BIL',
+  '复习': '📅 本周复习计划（基于你的数据）：\n\n周一：向心力基础题 × 15（掌握度最低）\n周二：电磁感应概念 × 10 + 楞次定律 × 5\n周三：动量守恒计算题 × 12\n周四：综合复习 — 做一套模拟题\n周五：错题回顾 + 薄弱点重做\n周末：学脉圈看同学笔记 + 放松\n\n⏰ 建议每天30分钟，不贪多但要保证质量！',
+  'default': '这是一个很好的问题！让我来帮你分析。\n\n物理学习的关键在于理解概念，而不是死记公式。建议你：\n\n1. 先回顾相关知识点的基础概念\n2. 看看学脉AI的薄弱点分析\n3. 做几道相关的专项练习\n4. 在学脉圈搜索同学的笔记\n\n你可以继续问我更具体的问题，比如某个知识点的解题技巧、公式推导、或者让我出一道练习题给你！'
+};
+
+function initAI() {}
+
+function aiAsk(text) {
+  document.getElementById('aiInput').value = text;
+  aiSend();
+}
+
+function aiSend() {
+  const input = document.getElementById('aiInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const msgs = document.getElementById('aiMessages');
+  const s = MOCK_STUDENTS[currentStudentIndex];
+
+  // Add user message
+  const userMsg = document.createElement('div');
+  userMsg.className = 'ai-msg ai-msg-user';
+  userMsg.innerHTML = `<div class="ai-msg-avatar"><img src="${s.avatar}" style="width:100%;height:100%;border-radius:50%"></div><div class="ai-msg-bubble"><div class="ai-msg-name">${s.name}</div><div class="ai-msg-text">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div>`;
+  msgs.appendChild(userMsg);
+
+  // Add typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'ai-msg ai-msg-bot';
+  typing.id = 'aiTyping';
+  typing.innerHTML = `<div class="ai-msg-avatar">🤖</div><div class="ai-msg-bubble"><div class="ai-msg-typing"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // Find best response
+  const lowerText = text.toLowerCase();
+  let response = AI_RESPONSES['default'];
+  for (const [key, val] of Object.entries(AI_RESPONSES)) {
+    if (key !== 'default' && lowerText.includes(key)) { response = val; break; }
+  }
+
+  // Simulate delay then show response
+  setTimeout(() => {
+    typing.remove();
+    const botMsg = document.createElement('div');
+    botMsg.className = 'ai-msg ai-msg-bot';
+    botMsg.style.animation = 'fadeSlideUp .3s ease';
+    botMsg.innerHTML = `<div class="ai-msg-avatar">🤖</div><div class="ai-msg-bubble"><div class="ai-msg-name">StudyPulse AI</div><div class="ai-msg-text" style="white-space:pre-wrap">${response}</div></div>`;
+    msgs.appendChild(botMsg);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 800 + Math.random() * 1200);
+}
+
+// ══════════ LEADERBOARD 排行榜 ══════════
+let currentLBType = 'pulse';
+
+function initLeaderboard() {
+  renderLeaderboardFull('pulse');
+}
+
+function switchLB(type, btn) {
+  document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  currentLBType = type;
+  renderLeaderboardFull(type);
+}
+
+function renderLeaderboardFull(type) {
+  const sortFn = {
+    pulse: (a, b) => b.pulsePoints - a.pulsePoints,
+    streak: (a, b) => b.streak - a.streak,
+    problems: (a, b) => b.totalProblems - a.totalProblems,
+    rate: (a, b) => parseFloat(b.correctRate) - parseFloat(a.correctRate)
+  }[type];
+  const valFn = {
+    pulse: s => fmtN(s.pulsePoints),
+    streak: s => s.streak + '天',
+    problems: s => fmtN(s.totalProblems),
+    rate: s => (parseFloat(s.correctRate) * 100).toFixed(1) + '%'
+  }[type];
+
+  const sorted = [...MOCK_STUDENTS].sort(sortFn);
+  const me = MOCK_STUDENTS[currentStudentIndex];
+
+  // Podium
+  const podium = document.getElementById('lbPodium');
+  const top3 = sorted.slice(0, 3);
+  const order = [1, 0, 2]; // display 2nd, 1st, 3rd
+  podium.innerHTML = order.map(i => {
+    const s = top3[i];
+    if (!s) return '';
+    const cls = i === 0 ? 'lb-p1' : i === 1 ? 'lb-p2' : 'lb-p3';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+    return `<div class="lb-podium-item ${cls}"><div class="lb-podium-bar"><div class="lb-podium-rank">${medal}</div><img src="${s.avatar}" class="lb-podium-avatar" alt=""><div class="lb-podium-name">${s.name}</div><div class="lb-podium-school">${s.school}</div><div class="lb-podium-val">${valFn(s)}</div></div></div>`;
+  }).join('');
+
+  // Full list
+  const list = document.getElementById('lbFullList');
+  list.innerHTML = sorted.slice(3, 50).map((s, i) => {
+    const isMe = s.id === me.id;
+    return `<div class="lb-list-item${isMe ? ' me' : ''}"><span class="lb-list-rank">${i + 4}</span><img src="${s.avatar}" class="lb-list-avatar" alt=""><div class="lb-list-info"><div class="lb-list-name">${s.name}${isMe ? ' (你)' : ''}</div><div class="lb-list-school">${s.school} · ${s.rank}</div></div><div class="lb-list-val">${valFn(s)}</div></div>`;
+  }).join('');
 }
 
 // ══════════ CONFETTI ══════════

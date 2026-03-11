@@ -33,7 +33,10 @@
                 <a href="#" onclick="showPage('landing');return false" class="nav-link active" data-page="landing">首页</a>
                 <a href="#" onclick="showPage('dashboard');return false" class="nav-link" data-page="dashboard">学习追踪</a>
                 <a href="#" onclick="showPage('practice');return false" class="nav-link" data-page="practice">刷题练习</a>
+                <a href="#" onclick="showPage('wrongbook');return false" class="nav-link" data-page="wrongbook">错题本</a>
+                <a href="#" onclick="showPage('ai');return false" class="nav-link" data-page="ai">AI助手</a>
                 <a href="#" onclick="showPage('community');return false" class="nav-link" data-page="community">学脉圈</a>
+                <a href="#" onclick="showPage('leaderboard');return false" class="nav-link" data-page="leaderboard">排行榜</a>
                 <a href="#" onclick="showPage('analytics');return false" class="nav-link" data-page="analytics">数据分析</a>
             </div>
             <div class="nav-right">
@@ -656,6 +659,94 @@
                 <div class="dcard" data-anim><div class="dcard-h"><span class="dcard-t">🤖 AI 学习建议</span></div><div id="aiInsights"></div></div>
                 <div class="dcard" data-anim><div class="dcard-h"><span class="dcard-t">👥 同校对比</span></div><div id="comparisonChart"></div></div>
             </div>
+        </div>
+    </div>
+
+    <!-- ==================== WRONG BOOK 错题本 ==================== -->
+    <div class="page" id="page-wrongbook">
+        <div class="pg">
+            <div class="wb-header">
+                <h1 class="pg-title">📕 错题本</h1>
+                <div class="wb-stats">
+                    <span class="wb-stat"><strong id="wbTotal">0</strong> 错题</span>
+                    <span class="wb-stat"><strong id="wbMastered">0</strong> 已掌握</span>
+                    <span class="wb-stat"><strong id="wbRemaining">0</strong> 待复习</span>
+                </div>
+            </div>
+            <div class="wb-filters">
+                <button class="wb-chip active" onclick="filterWB('all',this)">全部</button>
+                <button class="wb-chip" onclick="filterWB('力学',this)">力学</button>
+                <button class="wb-chip" onclick="filterWB('电磁学',this)">电磁学</button>
+                <button class="wb-chip" onclick="filterWB('热学',this)">热学</button>
+                <button class="wb-chip" onclick="filterWB('光学',this)">光学</button>
+                <button class="wb-chip" onclick="filterWB('近代物理',this)">近代物理</button>
+            </div>
+            <!-- Empty state / list -->
+            <div id="wbContent"></div>
+        </div>
+    </div>
+
+    <!-- ==================== AI TUTOR 助手 ==================== -->
+    <div class="page" id="page-ai">
+        <div class="pg ai-page">
+            <div class="ai-sidebar">
+                <div class="ai-sidebar-head">
+                    <h2>🤖 AI 学习助手</h2>
+                    <p>你的专属物理辅导老师</p>
+                </div>
+                <div class="ai-suggestions">
+                    <h4>试试问我：</h4>
+                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">向心力和离心力有什么区别？</button>
+                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">帮我分析一下我的薄弱知识点</button>
+                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">楞次定律怎么快速判断方向？</button>
+                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">给我出一道动量守恒的计算题</button>
+                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">电磁感应的解题步骤是什么？</button>
+                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">帮我制定本周复习计划</button>
+                </div>
+                <div class="ai-capabilities">
+                    <h4>我能帮你：</h4>
+                    <div class="ai-cap">📝 解题答疑</div>
+                    <div class="ai-cap">📊 学情分析</div>
+                    <div class="ai-cap">📚 知识讲解</div>
+                    <div class="ai-cap">🎯 出题练习</div>
+                    <div class="ai-cap">📅 复习规划</div>
+                    <div class="ai-cap">💡 错题分析</div>
+                </div>
+            </div>
+            <div class="ai-chat-area">
+                <div class="ai-messages" id="aiMessages">
+                    <div class="ai-msg ai-msg-bot">
+                        <div class="ai-msg-avatar">🤖</div>
+                        <div class="ai-msg-bubble">
+                            <div class="ai-msg-name">StudyPulse AI</div>
+                            <div class="ai-msg-text">你好！我是学脉AI助手，你的专属物理辅导老师。🎓<br><br>我可以帮你：<br>• 解答物理题目<br>• 分析你的薄弱知识点<br>• 讲解核心概念<br>• 出针对性练习题<br>• 制定复习计划<br><br>有什么想问的？直接输入就好！</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-input-area">
+                    <input type="text" class="ai-input" id="aiInput" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')aiSend()">
+                    <button class="btn btn-glow" onclick="aiSend()">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== LEADERBOARD 排行榜 ==================== -->
+    <div class="page" id="page-leaderboard">
+        <div class="pg">
+            <div class="lb-header">
+                <h1 class="pg-title">🏆 排行榜</h1>
+                <div class="lb-toggle">
+                    <button class="lb-tab active" onclick="switchLB('pulse',this)">学脉值</button>
+                    <button class="lb-tab" onclick="switchLB('streak',this)">连续天数</button>
+                    <button class="lb-tab" onclick="switchLB('problems',this)">做题数</button>
+                    <button class="lb-tab" onclick="switchLB('rate',this)">正确率</button>
+                </div>
+            </div>
+            <!-- Top 3 podium -->
+            <div class="lb-podium" id="lbPodium"></div>
+            <!-- Full list -->
+            <div class="lb-full-list" id="lbFullList"></div>
         </div>
     </div>
 
