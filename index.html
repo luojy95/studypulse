@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyPulse 学脉 — AI驱动个性化学习平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Ambient background -->
+    <canvas id="bgCanvas"></canvas>
+    <div class="noise-overlay"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo" onclick="showPage('landing')">
+                <svg class="logo-svg" viewBox="0 0 32 32" width="26" height="26">
+                    <defs>
+                        <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#818CF8"/>
+                            <stop offset="100%" style="stop-color:#06B6D4"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M4 16 Q8 8,12 16 Q14 20,16 12 Q18 4,20 16 Q22 24,24 16 Q26 12,28 16" fill="none" stroke="url(#g1)" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+                <span class="logo-wordmark">StudyPulse</span>
+                <span class="logo-cn">学脉</span>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="#" onclick="showPage('landing');return false" class="nav-link active" data-page="landing">首页</a>
+                <a href="#" onclick="showPage('dashboard');return false" class="nav-link" data-page="dashboard">学习追踪</a>
+                <a href="#" onclick="showPage('practice');return false" class="nav-link" data-page="practice">刷题练习</a>
+                <a href="#" onclick="showPage('community');return false" class="nav-link" data-page="community">学脉圈</a>
+                <a href="#" onclick="showPage('analytics');return false" class="nav-link" data-page="analytics">数据分析</a>
+            </div>
+            <div class="nav-right">
+                <div class="nav-user" id="currentUser" onclick="toggleUserPanel()">
+                    <img src="" alt="" class="nav-avatar" id="userAvatar">
+                    <span class="nav-username" id="userName">加载中</span>
+                    <span class="nav-rank" id="userRank"></span>
+                </div>
+                <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Smart popup overlay -->
+    <div class="popup-backdrop" id="popupOverlay" onclick="closePopup()"></div>
+    <div class="popup-glass" id="popupContainer">
+        <div class="popup-header">
+            <span class="popup-icon" id="popupIcon">🎯</span>
+            <span class="popup-title" id="popupTitle">智能推荐</span>
+            <button class="popup-x" onclick="closePopup()">✕</button>
+        </div>
+        <div class="popup-body" id="popupBody"></div>
+        <div class="popup-actions" id="popupActions"></div>
+    </div>
+
+    <!-- Toast stack -->
+    <div class="toast-stack" id="toastContainer"></div>
+
+    <!-- ==================== LANDING ==================== -->
+    <div class="page active" id="page-landing">
+
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-glow g1"></div>
+            <div class="hero-glow g2"></div>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-dot"></span>
+                    AI-Powered Adaptive Learning
+                    <span class="badge-new">Beta</span>
+                </div>
+                <h1 class="hero-h1">
+                    <span class="line1">每一道题</span>
+                    <span class="line2">都有脉搏</span>
+                </h1>
+                <p class="hero-p">
+                    基于深度知识追踪模型的个性化学习引擎。实时定位薄弱知识点，智能推荐练习方案，学习社区驱动持续成长。
+                </p>
+                <div class="hero-btns">
+                    <button class="btn btn-glow" onclick="showPage('dashboard')">开始学习 →</button>
+                    <button class="btn btn-glass" onclick="showPage('community')">探索社区</button>
+                </div>
+                <!-- Stats ticker -->
+                <div class="hero-ticker">
+                    <div class="tk"><span class="tk-val" data-target="11421">0</span><span class="tk-lab">题库</span></div>
+                    <div class="tk-div"></div>
+                    <div class="tk"><span class="tk-val" data-target="100">0</span><span class="tk-lab">学生</span></div>
+                    <div class="tk-div"></div>
+                    <div class="tk"><span class="tk-val" data-target="126">0</span><span class="tk-lab">知识点</span></div>
+                    <div class="tk-div"></div>
+                    <div class="tk"><span class="tk-val" data-target="93">0</span><span class="tk-lab">% 提分</span></div>
+                </div>
+            </div>
+
+            <!-- Floating preview cards -->
+            <div class="hero-cards">
+                <div class="fcard fcard-1 float-anim" style="--d:0s">
+                    <div class="fcard-head"><span class="fdot green"></span>知识掌握度</div>
+                    <div class="mini-heatmap" id="miniHeatmap"></div>
+                </div>
+                <div class="fcard fcard-2 float-anim" style="--d:.4s">
+                    <div class="fcard-head"><span class="fdot red"></span>AI 薄弱点检测</div>
+                    <div class="fcard-alert">
+                        <span class="alert-ring"></span>
+                        "向心力" 掌握度仅 <strong>23%</strong>
+                    </div>
+                    <div class="fcard-cta" onclick="showPage('practice')">开始专项练习 →</div>
+                </div>
+                <div class="fcard fcard-3 float-anim" style="--d:.8s">
+                    <div class="fcard-head"><span class="fdot cyan"></span>正确率趋势 <span class="up">↑12%</span></div>
+                    <svg class="sparkline" viewBox="0 0 180 50" id="heroSparkline"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- School logos scroll -->
+        <section class="logos-strip">
+            <div class="logos-label">合作学校</div>
+            <div class="logos-track">
+                <div class="logos-scroll">
+                    <span>北京四中</span><span>人大附中</span><span>上海中学</span><span>衡水中学</span><span>成都七中</span><span>深圳中学</span><span>杭州二中</span><span>南京外国语</span><span>华师大二附</span>
+                    <span>北京四中</span><span>人大附中</span><span>上海中学</span><span>衡水中学</span><span>成都七中</span><span>深圳中学</span><span>杭州二中</span><span>南京外国语</span><span>华师大二附</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Bento -->
+        <section class="section" id="features">
+            <div class="container">
+                <div class="sec-head">
+                    <span class="sec-eye">Core Features</span>
+                    <h2>为什么选择学脉？</h2>
+                    <p>六大核心能力，构建完整的个性化学习闭环</p>
+                </div>
+                <div class="bento">
+                    <div class="b-card b-hero" onclick="showPage('dashboard')" data-anim>
+                        <div class="b-glow"></div>
+                        <h3>AI 实时追踪引擎</h3>
+                        <p>基于 Deep Knowledge Tracing + Attention 模型，实时分析做题行为，深度理解知识点关联与遗忘曲线。</p>
+                        <div class="pulse-vis">
+                            <svg viewBox="0 0 240 40"><path class="pulse-line" d="M0 20 Q15 20,20 20 Q30 5,40 20 Q50 35,60 20 Q75 20,80 20 Q90 8,100 20 Q110 32,120 20 Q135 20,140 20 Q150 5,160 20 Q170 35,180 20 Q195 20,200 20 Q210 8,220 20 L240 20" fill="none" stroke="url(#g1)" stroke-width="2"/></svg>
+                        </div>
+                        <span class="b-tag">Pulse Engine™</span>
+                    </div>
+                    <div class="b-card" onclick="showPage('practice')" data-anim>
+                        <div class="b-glow"></div>
+                        <div class="b-ico" style="--c:#06B6D4">⚡</div>
+                        <h3>智能推荐</h3>
+                        <p>三路召回+排序，ZPD 理论驱动最优练习路径</p>
+                        <span class="b-tag">推荐引擎</span>
+                    </div>
+                    <div class="b-card" onclick="showPage('analytics')" data-anim>
+                        <div class="b-glow"></div>
+                        <div class="b-ico" style="--c:#EC4899">📊</div>
+                        <h3>深度分析</h3>
+                        <p>热力图、雷达图、趋势追踪，进步清晰可见</p>
+                        <span class="b-tag">Analytics</span>
+                    </div>
+                    <div class="b-card" onclick="showPage('community')" data-anim>
+                        <div class="b-glow"></div>
+                        <div class="b-ico" style="--c:#F59E0B">🌐</div>
+                        <h3>学脉圈</h3>
+                        <p>类小红书学习社区，笔记分享，互帮互助</p>
+                        <span class="b-tag">Community</span>
+                    </div>
+                    <div class="b-card b-wide" data-anim>
+                        <div class="b-glow"></div>
+                        <div class="b-split">
+                            <div>
+                                <div class="b-ico" style="--c:#EF4444">🔔</div>
+                                <h3>Proactive Pop-up</h3>
+                                <p>智能检测连续错题、薄弱环节，主动推送个性化建议</p>
+                                <span class="b-tag">Smart Alerts</span>
+                            </div>
+                            <div class="popup-demos">
+                                <div class="pd"><span class="pd-dot red"></span>检测到「向心力」连续3题出错</div>
+                                <div class="pd"><span class="pd-dot green"></span>推荐：3分钟核心概念视频 →</div>
+                                <div class="pd"><span class="pd-dot blue"></span>「光学」已7天未练，建议复习</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="b-card" data-anim>
+                        <div class="b-glow"></div>
+                        <div class="b-ico" style="--c:#10B981">👨‍👩‍👧</div>
+                        <h3>家校联动</h3>
+                        <p>家长端学情同步，学校端班级数据看板</p>
+                        <span class="b-tag">家长 · 学校</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How it works -->
+        <section class="section">
+            <div class="container">
+                <div class="sec-head">
+                    <span class="sec-eye">How It Works</span>
+                    <h2>四步开启智能学习</h2>
+                </div>
+                <div class="steps-row">
+                    <div class="step-item" data-anim><div class="step-n">01</div><h4>做题</h4><p>系统自动采集做题数据</p></div>
+                    <div class="step-line"></div>
+                    <div class="step-item" data-anim><div class="step-n">02</div><h4>AI 分析</h4><p>实时更新知识画像</p></div>
+                    <div class="step-line"></div>
+                    <div class="step-item" data-anim><div class="step-n">03</div><h4>精准推荐</h4><p>ZPD 理论最优路径</p></div>
+                    <div class="step-line"></div>
+                    <div class="step-item" data-anim><div class="step-n">04</div><h4>社区激励</h4><p>分享成就持续学习</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials -->
+        <section class="section">
+            <div class="container">
+                <div class="sec-head">
+                    <span class="sec-eye">Testimonials</span>
+                    <h2>学生们怎么说</h2>
+                </div>
+                <div class="test-grid">
+                    <div class="test-card" data-anim>
+                        <div class="test-stars">★★★★★</div>
+                        <p>"用了两个月，物理从62分到87分。AI推荐精准得吓人。"</p>
+                        <div class="test-author"><img src="https://api.dicebear.com/7.x/thumbs/svg?seed=3" alt=""><div><strong>张浩然</strong><span>北京四中 · 高二</span></div></div>
+                    </div>
+                    <div class="test-card" data-anim>
+                        <div class="test-stars">★★★★★</div>
+                        <p>"Pop-up提醒太好了，连续做错就推荐视频讲解，学脉圈笔记也很有帮助。"</p>
+                        <div class="test-author"><img src="https://api.dicebear.com/7.x/thumbs/svg?seed=7" alt=""><div><strong>王欣怡</strong><span>上海中学 · 高三</span></div></div>
+                    </div>
+                    <div class="test-card" data-anim>
+                        <div class="test-stars">★★★★★</div>
+                        <p>"作为家长，AI学情报告让我不用天天问孩子。比我更懂他的弱项。"</p>
+                        <div class="test-author"><img src="https://api.dicebear.com/7.x/thumbs/svg?seed=15" alt=""><div><strong>李女士</strong><span>家长</span></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing -->
+        <section class="section" id="pricing">
+            <div class="container">
+                <div class="sec-head">
+                    <span class="sec-eye">Pricing</span>
+                    <h2>选择方案</h2>
+                    <p>免费体验，随时升级</p>
+                </div>
+                <div class="price-grid">
+                    <div class="price-card" data-anim>
+                        <div class="price-name">免费版</div>
+                        <div class="price-amount"><sup>¥</sup>0<sub>/月</sub></div>
+                        <ul><li class="yes">每日20题</li><li class="yes">基础分析</li><li class="yes">社区浏览</li><li class="yes">周学情报告</li><li class="no">AI推荐</li><li class="no">自动错题本</li></ul>
+                        <button class="btn btn-glass btn-block" onclick="showToast('当前方案','info')">当前方案</button>
+                    </div>
+                    <div class="price-card price-pop" data-anim>
+                        <div class="price-badge">✨ 热门</div>
+                        <div class="price-name">Pro 版</div>
+                        <div class="price-amount"><sup>¥</sup>39<sub>/月</sub></div>
+                        <div class="price-save">年付 ¥299 省35%</div>
+                        <ul><li class="yes">无限做题</li><li class="yes">深度AI分析</li><li class="yes">精准推荐</li><li class="yes">发帖互动</li><li class="yes">AI错题本</li><li class="yes">智能Pop-up</li></ul>
+                        <button class="btn btn-glow btn-block" onclick="showToast('🎉 开通成功！','success')">升级 Pro</button>
+                    </div>
+                    <div class="price-card" data-anim>
+                        <div class="price-name">校园版</div>
+                        <div class="price-amount"><sup>¥</sup>8万<sub>/年/校</sub></div>
+                        <ul><li class="yes">全校账号</li><li class="yes">教师后台</li><li class="yes">班级面板</li><li class="yes">私域社区</li><li class="yes">API对接</li><li class="yes">专属客服</li></ul>
+                        <button class="btn btn-glass btn-block" onclick="showToast('已提交','success')">联系我们</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section">
+            <div class="cta-glow"></div>
+            <h2>准备开始智能学习之旅了吗？</h2>
+            <p>加入 StudyPulse 学脉，让 AI 成为你最好的学习伙伴</p>
+            <button class="btn btn-glow btn-lg" onclick="showPage('dashboard')">免费开始 →</button>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container footer-inner">
+                <div class="footer-brand">
+                    <svg viewBox="0 0 32 32" width="22" height="22"><path d="M4 16 Q8 8,12 16 Q14 20,16 12 Q18 4,20 16 Q22 24,24 16 Q26 12,28 16" fill="none" stroke="url(#g1)" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    <span>StudyPulse 学脉</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#" onclick="showPage('dashboard');return false">追踪</a>
+                    <a href="#" onclick="showPage('practice');return false">练习</a>
+                    <a href="#" onclick="showPage('community');return false">社区</a>
+                    <a href="#" onclick="showPage('analytics');return false">分析</a>
+                </div>
+                <div class="footer-copy">© 2026 StudyPulse. Made with 💜</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ==================== DASHBOARD ==================== -->
+    <div class="page" id="page-dashboard">
+        <div class="pg">
+            <div class="dash-welcome">
+                <div class="dw-left">
+                    <h1>欢迎回来，<span class="gradient-text" id="dashUserName"></span></h1>
+                    <p id="dashSubtitle">今天继续加油 💪</p>
+                </div>
+                <div class="dw-right">
+                    <div class="streak-pill">🔥 <strong id="streakCount">0</strong> 天连续</div>
+                    <button class="btn btn-glow" onclick="showPage('practice')">▶ 继续练习</button>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="scard" data-anim><div class="scard-ico" style="--c:#818CF8"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 14V8M7 14V4M11 14V9M15 14V2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div class="scard-val" id="totalProblems">0</div><div class="scard-lab">累计做题</div></div>
+                <div class="scard" data-anim><div class="scard-ico" style="--c:#06B6D4"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2"/><path d="M6 9l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="scard-val" id="correctRate">0%</div><div class="scard-lab">正确率</div></div>
+                <div class="scard" data-anim><div class="scard-ico" style="--c:#F59E0B"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2l2.2 4.4 4.8.7-3.5 3.4.8 4.9L9 13l-4.3 2.4.8-4.9-3.5-3.4 4.8-.7L9 2z" stroke="currentColor" stroke-width="1.5"/></svg></div><div class="scard-val" id="pulsePoints">0</div><div class="scard-lab">学脉值</div></div>
+                <div class="scard" data-anim><div class="scard-ico" style="--c:#EC4899"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 15s-5-3.7-5-7.5A3.5 3.5 0 019 4.5a3.5 3.5 0 015 3c0 3.8-5 7.5-5 7.5z" stroke="currentColor" stroke-width="1.5"/></svg></div><div class="scard-val" id="dashRank">—</div><div class="scard-lab">段位</div></div>
+            </div>
+
+            <div class="dash-grid">
+                <div class="dcard dcard-full" data-anim>
+                    <div class="dcard-h"><span class="dcard-t">📊 知识掌握热力图</span><span class="dcard-sub">颜色越亮掌握越好 · 点击查看详情</span></div>
+                    <div class="heatmap-wrap" id="heatmapContainer"></div>
+                    <div class="heatmap-legend"><span>0%</span><div class="hl-bar"></div><span>100%</span></div>
+                </div>
+                <div class="dcard" data-anim>
+                    <div class="dcard-h"><span class="dcard-t">⚠️ 薄弱 TOP 5</span></div>
+                    <div id="weakPoints"></div>
+                    <button class="btn btn-glow btn-block" onclick="startWeakPointPractice()" style="margin-top:14px">🎯 专项练习</button>
+                </div>
+                <div class="dcard" data-anim>
+                    <div class="dcard-h"><span class="dcard-t">📈 本周趋势</span></div>
+                    <div class="trend-chart" id="trendChart"></div>
+                </div>
+                <div class="dcard" data-anim>
+                    <div class="dcard-h"><span class="dcard-t">🎯 今日目标</span></div>
+                    <div id="goalsContainer"></div>
+                </div>
+                <div class="dcard" data-anim>
+                    <div class="dcard-h"><span class="dcard-t">📋 最近做题</span></div>
+                    <div id="activityList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== PRACTICE ==================== -->
+    <div class="page" id="page-practice">
+        <div class="pg">
+            <div class="pract-top">
+                <h1 class="pg-title">刷题练习</h1>
+                <div class="pract-pills">
+                    <span class="sp">本次 <b id="practiceCount">0</b></span>
+                    <span class="sp sp-ok">✓ <b id="practiceCorrect">0</b></span>
+                    <span class="sp"><b id="practiceRate">0%</b></span>
+                    <span class="sp">⏱<b id="practiceTimer">00:00</b></span>
+                </div>
+            </div>
+            <div class="mode-row">
+                <button class="mode-chip active" onclick="setPracticeMode('smart',this)">🤖 AI推荐</button>
+                <button class="mode-chip" onclick="setPracticeMode('topic',this)">📚 专题</button>
+                <button class="mode-chip" onclick="setPracticeMode('exam',this)">📝 模考</button>
+                <button class="mode-chip" onclick="setPracticeMode('wrong',this)">❌ 错题</button>
+            </div>
+            <div class="filter-row">
+                <select id="categoryFilter" onchange="filterProblems()"><option value="">全部分类</option></select>
+                <select id="topicFilter" onchange="filterProblems()"><option value="">全部专题</option></select>
+                <select id="difficultyFilter" onchange="filterProblems()"><option value="">全部难度</option><option value="基础">基础</option><option value="中等">中等</option><option value="较难">较难</option><option value="难">难</option><option value="竞赛">竞赛</option></select>
+                <select id="typeFilter" onchange="filterProblems()"><option value="">全部题型</option><option value="选择题">选择题</option><option value="填空题">填空题</option><option value="计算题">计算题</option><option value="实验题">实验题</option><option value="综合题">综合题</option></select>
+            </div>
+
+            <div class="problem-card" id="problemContainer">
+                <div class="p-tags">
+                    <span class="pt pt-id" id="problemId"></span>
+                    <span class="pt pt-cat" id="problemCategory"></span>
+                    <span class="pt pt-topic" id="problemTopic"></span>
+                    <span class="pt pt-kp" id="problemKP"></span>
+                    <span class="pt pt-diff" id="problemDiff"></span>
+                    <span class="pt pt-type" id="problemType"></span>
+                </div>
+                <div class="p-question" id="problemQuestion"></div>
+                <div class="p-options" id="problemOptions"></div>
+                <div class="p-input" id="problemInput" style="display:none"><textarea placeholder="请输入答案..." id="answerInput"></textarea></div>
+                <div class="p-actions">
+                    <button class="btn btn-glass" onclick="skipProblem()">跳过</button>
+                    <button class="btn btn-glow" onclick="submitAnswer()" id="submitBtn">提交答案</button>
+                    <button class="btn btn-glow" onclick="nextProblem()" id="nextBtn" style="display:none">下一题 →</button>
+                </div>
+                <div class="p-result" id="problemResult" style="display:none">
+                    <div class="p-result-banner" id="resultHeader"></div>
+                    <div class="p-result-detail" id="resultExplanation"></div>
+                    <div class="p-similar" id="similarProblems"><h4>📎 同类题推荐</h4><div id="similarList"></div></div>
+                </div>
+            </div>
+            <div class="pract-bar"><div class="pract-bar-fill" id="practiceFill"></div></div>
+        </div>
+    </div>
+
+    <!-- ==================== COMMUNITY ==================== -->
+    <div class="page" id="page-community">
+        <div class="pg">
+            <div class="comm-top">
+                <h1 class="pg-title">学脉圈</h1>
+                <button class="btn btn-glow" onclick="showNewPostModal()">+ 发帖</button>
+            </div>
+            <div class="comm-tabs">
+                <button class="ctab active" onclick="filterPosts('all',this)">🔥 推荐</button>
+                <button class="ctab" onclick="filterPosts('解题笔记',this)">📝 笔记</button>
+                <button class="ctab" onclick="filterPosts('错题分析',this)">💡 错题</button>
+                <button class="ctab" onclick="filterPosts('打卡成就',this)">🏆 打卡</button>
+                <button class="ctab" onclick="filterPosts('求助帖',this)">❓ 求助</button>
+                <button class="ctab" onclick="filterPosts('经验分享',this)">✨ 经验</button>
+            </div>
+            <div class="comm-layout">
+                <div class="posts-grid" id="postsGrid"></div>
+                <aside class="comm-side">
+                    <div class="side-card" data-anim>
+                        <h3>🔥 热门话题</h3>
+                        <a href="#" class="ht">#向心力专题<span>1.2k</span></a>
+                        <a href="#" class="ht">#高考倒计时<span>892</span></a>
+                        <a href="#" class="ht">#电磁感应<span>756</span></a>
+                        <a href="#" class="ht">#实验技巧<span>634</span></a>
+                        <a href="#" class="ht">#错题本<span>521</span></a>
+                    </div>
+                    <div class="side-card" data-anim>
+                        <h3>🏆 排行</h3>
+                        <div id="leaderboard"></div>
+                    </div>
+                    <div class="side-card" data-anim>
+                        <h3>📢 公告</h3>
+                        <div class="ann"><span class="ann-tag new">NEW</span>AI推荐算法升级</div>
+                        <div class="ann"><span class="ann-tag ev">活动</span>百日冲刺赢Pro</div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ANALYTICS ==================== -->
+    <div class="page" id="page-analytics">
+        <div class="pg">
+            <div class="ana-top">
+                <h1 class="pg-title">数据分析</h1>
+                <div class="time-toggle">
+                    <button class="tt active" onclick="setTimeRange('week',this)">本周</button>
+                    <button class="tt" onclick="setTimeRange('month',this)">本月</button>
+                    <button class="tt" onclick="setTimeRange('all',this)">全部</button>
+                </div>
+            </div>
+            <div class="ana-ov">
+                <div class="aov" data-anim><div class="aov-v" id="anaTotal">0</div><div class="aov-l">总做题</div><div class="aov-c pos">↑12%</div></div>
+                <div class="aov" data-anim><div class="aov-v" id="anaRate">0%</div><div class="aov-l">正确率</div><div class="aov-c pos">↑5%</div></div>
+                <div class="aov" data-anim><div class="aov-v" id="anaTime">0h</div><div class="aov-l">学习时长</div><div class="aov-c pos">↑8%</div></div>
+                <div class="aov" data-anim><div class="aov-v" id="anaWeak">0</div><div class="aov-l">待提升</div><div class="aov-c neg">需关注</div></div>
+            </div>
+            <div class="ana-grid">
+                <div class="dcard dcard-full" data-anim><div class="dcard-h"><span class="dcard-t">📊 各板块掌握度</span></div><div id="categoryChart"></div></div>
+                <div class="dcard" data-anim><div class="dcard-h"><span class="dcard-t">🎯 能力雷达</span></div><div class="radar-wrap"><svg viewBox="0 0 300 300" id="radarSvg"></svg></div></div>
+                <div class="dcard" data-anim><div class="dcard-h"><span class="dcard-t">📊 题型分布</span></div><div id="typeChart" class="donut-wrap"></div></div>
+                <div class="dcard dcard-full" data-anim><div class="dcard-h"><span class="dcard-t">📉 各难度正确率</span></div><div id="difficultyChart" class="diff-wrap"></div></div>
+                <div class="dcard" data-anim><div class="dcard-h"><span class="dcard-t">🤖 AI 学习建议</span></div><div id="aiInsights"></div></div>
+                <div class="dcard" data-anim><div class="dcard-h"><span class="dcard-t">👥 同校对比</span></div><div id="comparisonChart"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Post Modal -->
+    <div class="modal-bg" id="newPostModal" onclick="closeNewPostModal(event)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div class="modal-head"><h2>发表新帖</h2><button onclick="closeNewPostModal()">✕</button></div>
+            <div class="modal-body">
+                <select id="postType" class="fi"><option value="解题笔记">📝 解题笔记</option><option value="错题分析">💡 错题分析</option><option value="打卡成就">🏆 打卡成就</option><option value="求助帖">❓ 求助</option><option value="经验分享">✨ 经验分享</option></select>
+                <input type="text" id="postTitle" class="fi" placeholder="标题">
+                <textarea id="postContent" class="fi fi-ta" placeholder="分享你的学习心得..."></textarea>
+                <div class="modal-tags"><button class="mtag" onclick="toggleTag(this)">物理</button><button class="mtag" onclick="toggleTag(this)">力学</button><button class="mtag" onclick="toggleTag(this)">电磁学</button><button class="mtag" onclick="toggleTag(this)">错题</button></div>
+            </div>
+            <div class="modal-foot"><button class="btn btn-glass" onclick="closeNewPostModal()">取消</button><button class="btn btn-glow" onclick="submitPost()">发布</button></div>
+        </div>
+    </div>
+
+    <!-- User panel -->
+    <div class="usr-panel" id="userPanel">
+        <div class="usr-panel-h">切换用户（演示）</div>
+        <div id="userList"></div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
