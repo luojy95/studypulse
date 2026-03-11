@@ -582,36 +582,81 @@ function loadMorePosts() {
   const g = document.getElementById('postsGrid');
   const posts = getFilteredComm();
   const batch = posts.slice(commPostsShown, commPostsShown + 24);
-  const coverClasses = ['cover-1','cover-2','cover-3','cover-4','cover-5','cover-6','cover-7','cover-8'];
-  const coverEmojis = ['📐','⚡','🧲','🔬','💡','📊','🎯','🧪','🔭','🌊','⚛️','📝','🧠','📈','✏️','🔑'];
-  const typeClassMap = {'解题笔记':'pc-type-note','错题分析':'pc-type-wrong','打卡成就':'pc-type-streak','求助帖':'pc-type-help','经验分享':'pc-type-exp'};
+
+  // Visual diversity system — each card looks different
+  const coverPalettes = [
+    ['#1e1b4b','#3730a3','#818CF8'], ['#164e63','#0e7490','#22d3ee'],
+    ['#4c1d95','#7c3aed','#c4b5fd'], ['#831843','#be185d','#f9a8d4'],
+    ['#1e3a5f','#0369a1','#7dd3fc'], ['#064e3b','#059669','#6ee7b7'],
+    ['#78350f','#b45309','#fcd34d'], ['#1f2937','#4b5563','#9ca3af'],
+    ['#312e81','#4f46e5','#a5b4fc'], ['#701a75','#a21caf','#e879f9']
+  ];
+  const physicsSymbols = ['F=ma','E=mc²','v=v₀+at','ΔΦ/Δt','P=IV','W=Fd','λ=h/p','F=kx','τ=Iα','∮E·dl'];
+  const typeStyles = {
+    '解题笔记': {badge:'pc-type-note', accent:'#818CF8'},
+    '错题分析': {badge:'pc-type-wrong', accent:'#F59E0B'},
+    '打卡成就': {badge:'pc-type-streak', accent:'#10B981'},
+    '求助帖': {badge:'pc-type-help', accent:'#EF4444'},
+    '经验分享': {badge:'pc-type-exp', accent:'#EC4899'}
+  };
 
   batch.forEach((p, idx) => {
     const i = commPostsShown + idx;
-    const hasCover = p.images > 0 || i % 3 !== 2;
-    const coverCls = coverClasses[i % coverClasses.length];
-    const coverEmoji = coverEmojis[i % coverEmojis.length];
-    const typeCls = typeClassMap[p.type] || 'pc-type-note';
+    const style = typeStyles[p.type] || typeStyles['解题笔记'];
+    const palette = coverPalettes[i % coverPalettes.length];
+    const symbol = physicsSymbols[i % physicsSymbols.length];
+
+    // Varying cover heights for masonry effect
+    const coverVariants = [100, 120, 140, 160, 80, 130, 110, 150];
+    const coverH = coverVariants[i % coverVariants.length];
+
+    // Different cover visual types
+    const coverType = i % 5; // 0=formula, 1=graph, 2=emoji big, 3=gradient only, 4=diagram
 
     const card = document.createElement('div');
     card.className = 'post-card' + (p.isHot ? ' hot' : '');
     card.onclick = () => openPostDetail(p);
 
-    let html = '';
-    if (hasCover) {
-      html += `<div class="pc-cover-gradient ${coverCls}"><span>${coverEmoji} ${p.type}</span></div>`;
+    let coverHTML = '';
+    if (i % 4 !== 3) { // 75% have covers
+      let coverInner = '';
+      if (coverType === 0) {
+        coverInner = `<div class="pc-formula">${symbol}</div><span>${p.icon} ${p.type}</span>`;
+      } else if (coverType === 1) {
+        // Mini SVG chart
+        const pts = [];
+        for (let x = 0; x <= 100; x += 10) pts.push(`${x},${30 + Math.sin(x/15 + i)*20}`);
+        coverInner = `<svg class="pc-chart-svg" viewBox="0 0 100 60"><polyline points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/></svg><span>${p.icon} ${p.type}</span>`;
+      } else if (coverType === 2) {
+        coverInner = `<div class="pc-big-emoji">${p.icon}</div><span>${p.type}</span>`;
+      } else if (coverType === 4) {
+        // Grid pattern
+        coverInner = `<div class="pc-grid-pattern"></div><span>${p.icon} ${p.type}</span>`;
+      } else {
+        coverInner = `<span>${p.icon} ${p.type}</span>`;
+      }
+      coverHTML = `<div class="pc-cover-gradient" style="height:${coverH}px;background:linear-gradient(135deg,${palette[0]},${palette[1]},${palette[2]})">${coverInner}</div>`;
     }
+
+    // Engagement formatting
+    const likeStr = fmtN(p.likes);
+    const commentStr = p.comments;
+    const viewStr = fmtN(p.views || 0);
+
+    let html = coverHTML;
     html += `<div class="pc-inner">`;
-    html += `<span class="pc-type-badge ${typeCls}">${p.icon} ${p.type}</span>`;
-    html += `<div class="pc-title">${p.title}</div>`;
-    html += `<div class="pc-body">${p.content}</div>`;
-    html += `<div class="pc-tags">${p.tags.map(t => `<span class="pc-tag" onclick="event.stopPropagation();searchByTag('${t}')">#${t}</span>`).join('')}</div>`;
     html += `<div class="pc-author"><img src="${p.authorAvatar}" class="pc-avatar" alt=""><div><div class="pc-name">${p.authorName}</div><div class="pc-school">${p.authorSchool}</div></div><span class="pc-rank">${p.authorRank}</span></div>`;
+    html += `<div class="pc-title">${p.title}</div>`;
+    // Truncate body to varying lengths for visual diversity
+    const bodyLen = [80, 120, 60, 100, 140][i % 5];
+    const bodyText = p.content.length > bodyLen ? p.content.substring(0, bodyLen) + '...' : p.content;
+    html += `<div class="pc-body">${bodyText}</div>`;
+    html += `<div class="pc-tags">${p.tags.slice(0,3).map(t => `<span class="pc-tag" onclick="event.stopPropagation();searchByTag('${t}')">#${t}</span>`).join('')}</div>`;
     html += `<div class="pc-footer">`;
-    html += `<span class="pc-stat" onclick="event.stopPropagation();likePost(this,${p.likes})">❤️ ${fmtN(p.likes)}</span>`;
-    html += `<span class="pc-stat">💬 ${p.comments}</span>`;
-    html += `<span class="pc-stat">⭐ ${fmtN(p.bookmarks || 0)}</span>`;
-    html += `<span class="pc-views">👁 ${fmtN(p.views || 0)}</span>`;
+    html += `<span class="pc-stat" onclick="event.stopPropagation();likePost(this,${p.likes})">❤️ ${likeStr}</span>`;
+    html += `<span class="pc-stat">💬 ${commentStr}</span>`;
+    if (p.isHot) html += `<span class="pc-hot-badge">🔥 热门</span>`;
+    html += `<span class="pc-views">👁 ${viewStr}</span>`;
     html += `</div></div>`;
 
     card.innerHTML = html;
