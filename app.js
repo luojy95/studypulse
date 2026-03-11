@@ -557,16 +557,17 @@ function getFilteredComm() {
 function initCommunity() {
   const s = MOCK_STUDENTS[currentStudentIndex];
   const el = id => document.getElementById(id);
-  el('commAvatar').src = s.avatar;
-  el('commName').textContent = s.name;
-  el('commSchool').textContent = s.school + ' · ' + s.grade;
-  el('commMyPosts').textContent = rand2(5, 30);
-  el('commMyLikes').textContent = fmtN(rand2(100, 5000));
-  el('commMyFollowers').textContent = rand2(20, 200);
-  el('commPostCount').textContent = MOCK_POSTS.length;
-  el('commUserCount').textContent = MOCK_STUDENTS.length;
-  el('commTodayCount').textContent = rand2(30, 80);
-  el('commLikeCount').textContent = fmtN(MOCK_POSTS.reduce((s, p) => s + p.likes, 0));
+  if(el('commAvatar')) el('commAvatar').src = s.avatar;
+  if(el('commName')) el('commName').textContent = s.name;
+  if(el('commSchool')) el('commSchool').textContent = s.school + ' · ' + s.grade;
+  if(el('commMyPosts')) el('commMyPosts').textContent = rand2(5, 30);
+  if(el('commMyLikes')) el('commMyLikes').textContent = fmtN(rand2(100, 5000));
+  if(el('commMyFollowers')) el('commMyFollowers').textContent = rand2(20, 200);
+  if(el('commPostCount')) el('commPostCount').textContent = MOCK_POSTS.length;
+  if(el('commUserCount')) el('commUserCount').textContent = MOCK_STUDENTS.length;
+  if(el('commTodayCount')) el('commTodayCount').textContent = rand2(30, 80);
+  renderFeatured();
+  renderDailyRec();
 }
 function rand2(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 
@@ -578,85 +579,94 @@ function renderCommunityPosts(filter) {
   if (typeof initCommunity === 'function') initCommunity();
 }
 
+function renderFeatured() {
+  const el = document.getElementById('featuredScroll');
+  if (!el) return;
+  const hot = [...MOCK_POSTS].sort((a,b) => b.likes - a.likes).slice(0, 10);
+  const pals = [['#1e1b4b','#4338ca'],['#164e63','#0891b2'],['#4c1d95','#7c3aed'],['#831843','#db2777'],['#1e3a5f','#0284c7'],['#064e3b','#059669'],['#78350f','#d97706'],['#312e81','#6366f1'],['#701a75','#c026d3'],['#1f2937','#6b7280']];
+  el.innerHTML = hot.map((p, i) => {
+    const [c1,c2] = pals[i % pals.length];
+    return `<div class="cm-feat-card" onclick="openPostDetail(MOCK_POSTS.find(x=>x.id==='${p.id}'))">
+      <div class="cm-feat-cover" style="background:linear-gradient(135deg,${c1},${c2})">
+        <div class="cm-feat-title">${p.icon} ${p.title}</div>
+      </div>
+      <div class="cm-feat-meta">
+        <img src="${p.authorAvatar}" alt="">
+        <span>${p.authorName}</span>
+        <span class="fm-likes">❤️ ${fmtN(p.likes)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderDailyRec() {
+  const el = document.getElementById('dailyRec');
+  if (!el) return;
+  const recs = MOCK_POSTS.filter(p => p.type === '解题笔记').slice(0, 4);
+  const pals = [['#1e1b4b','#312e81'],['#164e63','#0e7490'],['#4c1d95','#7c3aed'],['#064e3b','#059669']];
+  el.innerHTML = recs.map((p, i) => {
+    const [c1,c2] = pals[i % pals.length];
+    return `<div class="cr-rec-item" onclick="openPostDetail(MOCK_POSTS.find(x=>x.id==='${p.id}'))">
+      <div class="cr-rec-thumb" style="background:linear-gradient(135deg,${c1},${c2})">${p.icon}</div>
+      <div class="cr-rec-info">
+        <div class="cr-rec-title">${p.title}</div>
+        <div class="cr-rec-meta">❤️ ${fmtN(p.likes)} · 💬 ${p.comments}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function loadMorePosts() {
   const g = document.getElementById('postsGrid');
   const posts = getFilteredComm();
-  const batch = posts.slice(commPostsShown, commPostsShown + 24);
+  const batch = posts.slice(commPostsShown, commPostsShown + 20);
 
-  // Visual diversity system — each card looks different
-  const coverPalettes = [
-    ['#1e1b4b','#3730a3','#818CF8'], ['#164e63','#0e7490','#22d3ee'],
-    ['#4c1d95','#7c3aed','#c4b5fd'], ['#831843','#be185d','#f9a8d4'],
-    ['#1e3a5f','#0369a1','#7dd3fc'], ['#064e3b','#059669','#6ee7b7'],
-    ['#78350f','#b45309','#fcd34d'], ['#1f2937','#4b5563','#9ca3af'],
-    ['#312e81','#4f46e5','#a5b4fc'], ['#701a75','#a21caf','#e879f9']
+  const palettes = [
+    ['#1e1b4b','#3730a3','#818CF8'],['#164e63','#0e7490','#22d3ee'],['#4c1d95','#7c3aed','#c4b5fd'],
+    ['#831843','#be185d','#f9a8d4'],['#1e3a5f','#0369a1','#7dd3fc'],['#064e3b','#059669','#6ee7b7'],
+    ['#78350f','#b45309','#fcd34d'],['#312e81','#4f46e5','#a5b4fc'],['#701a75','#a21caf','#e879f9'],
+    ['#1f2937','#4b5563','#d1d5db']
   ];
-  const physicsSymbols = ['F=ma','E=mc²','v=v₀+at','ΔΦ/Δt','P=IV','W=Fd','λ=h/p','F=kx','τ=Iα','∮E·dl'];
-  const typeStyles = {
-    '解题笔记': {badge:'pc-type-note', accent:'#818CF8'},
-    '错题分析': {badge:'pc-type-wrong', accent:'#F59E0B'},
-    '打卡成就': {badge:'pc-type-streak', accent:'#10B981'},
-    '求助帖': {badge:'pc-type-help', accent:'#EF4444'},
-    '经验分享': {badge:'pc-type-exp', accent:'#EC4899'}
-  };
+  const formulas = ['F=ma','E=mc\u00b2','v=v\u2080+at','\u0394\u03a6/\u0394t','P=IV','W=Fd','\u03bb=h/p','F=kx','PV=nRT','E=h\u03bd'];
+  const badgeMap = {'\u89e3\u9898\u7b14\u8bb0':'cm-badge-note','\u9519\u9898\u5206\u6790':'cm-badge-wrong','\u6253\u5361\u6210\u5c31':'cm-badge-streak','\u6c42\u52a9\u5e16':'cm-badge-help','\u7ecf\u9a8c\u5206\u4eab':'cm-badge-exp'};
+  const heights = [90,110,130,150,100,120,140,80,160,105];
 
   batch.forEach((p, idx) => {
     const i = commPostsShown + idx;
-    const style = typeStyles[p.type] || typeStyles['解题笔记'];
-    const palette = coverPalettes[i % coverPalettes.length];
-    const symbol = physicsSymbols[i % physicsSymbols.length];
-
-    // Varying cover heights for masonry effect
-    const coverVariants = [100, 120, 140, 160, 80, 130, 110, 150];
-    const coverH = coverVariants[i % coverVariants.length];
-
-    // Different cover visual types
-    const coverType = i % 5; // 0=formula, 1=graph, 2=emoji big, 3=gradient only, 4=diagram
+    const pal = palettes[i % palettes.length];
+    const h = heights[i % heights.length];
+    const formula = formulas[i % formulas.length];
+    const badge = badgeMap[p.type] || 'cm-badge-note';
+    const hasCover = i % 5 !== 4; // 80% have covers
+    const coverStyle = i % 4; // 0=formula 1=wave 2=emoji 3=clean
 
     const card = document.createElement('div');
-    card.className = 'post-card' + (p.isHot ? ' hot' : '');
+    card.className = 'cm-card' + (p.isHot ? ' hot' : '');
+    card.style.animationDelay = (idx * 30) + 'ms';
     card.onclick = () => openPostDetail(p);
 
     let coverHTML = '';
-    if (i % 4 !== 3) { // 75% have covers
-      let coverInner = '';
-      if (coverType === 0) {
-        coverInner = `<div class="pc-formula">${symbol}</div><span>${p.icon} ${p.type}</span>`;
-      } else if (coverType === 1) {
-        // Mini SVG chart
-        const pts = [];
-        for (let x = 0; x <= 100; x += 10) pts.push(`${x},${30 + Math.sin(x/15 + i)*20}`);
-        coverInner = `<svg class="pc-chart-svg" viewBox="0 0 100 60"><polyline points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/></svg><span>${p.icon} ${p.type}</span>`;
-      } else if (coverType === 2) {
-        coverInner = `<div class="pc-big-emoji">${p.icon}</div><span>${p.type}</span>`;
-      } else if (coverType === 4) {
-        // Grid pattern
-        coverInner = `<div class="pc-grid-pattern"></div><span>${p.icon} ${p.type}</span>`;
-      } else {
-        coverInner = `<span>${p.icon} ${p.type}</span>`;
-      }
-      coverHTML = `<div class="pc-cover-gradient" style="height:${coverH}px;background:linear-gradient(135deg,${palette[0]},${palette[1]},${palette[2]})">${coverInner}</div>`;
+    if (hasCover) {
+      let inner = `<span class="cm-cover-badge ${badge}">${p.icon} ${p.type}</span>`;
+      inner += `<span class="cm-cover-likes">\u2764\ufe0f ${fmtN(p.likes)}</span>`;
+      if (coverStyle === 0) inner += `<span class="cm-cover-formula">${formula}</span>`;
+      else if (coverStyle === 1) {
+        const pts = Array.from({length:11}, (_,x) => `${x*10},${25+Math.sin(x*.8+i)*18}`).join(' ');
+        inner += `<svg class="cm-cover-chart" viewBox="0 0 100 50"><polyline points="${pts}" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+      } else if (coverStyle === 2) inner += `<span class="cm-cover-emoji">${p.icon}</span>`;
+      coverHTML = `<div class="cm-cover" style="height:${h}px;background:linear-gradient(135deg,${pal[0]},${pal[1]},${pal[2]})">${inner}</div>`;
     }
 
-    // Engagement formatting
-    const likeStr = fmtN(p.likes);
-    const commentStr = p.comments;
-    const viewStr = fmtN(p.views || 0);
+    const bodyLen = [60,90,120,80,100][i % 5];
+    const excerpt = p.content.replace(/\n/g,' ').substring(0, bodyLen) + (p.content.length > bodyLen ? '...' : '');
 
     let html = coverHTML;
-    html += `<div class="pc-inner">`;
-    html += `<div class="pc-author"><img src="${p.authorAvatar}" class="pc-avatar" alt=""><div><div class="pc-name">${p.authorName}</div><div class="pc-school">${p.authorSchool}</div></div><span class="pc-rank">${p.authorRank}</span></div>`;
-    html += `<div class="pc-title">${p.title}</div>`;
-    // Truncate body to varying lengths for visual diversity
-    const bodyLen = [80, 120, 60, 100, 140][i % 5];
-    const bodyText = p.content.length > bodyLen ? p.content.substring(0, bodyLen) + '...' : p.content;
-    html += `<div class="pc-body">${bodyText}</div>`;
-    html += `<div class="pc-tags">${p.tags.slice(0,3).map(t => `<span class="pc-tag" onclick="event.stopPropagation();searchByTag('${t}')">#${t}</span>`).join('')}</div>`;
-    html += `<div class="pc-footer">`;
-    html += `<span class="pc-stat" onclick="event.stopPropagation();likePost(this,${p.likes})">❤️ ${likeStr}</span>`;
-    html += `<span class="pc-stat">💬 ${commentStr}</span>`;
-    if (p.isHot) html += `<span class="pc-hot-badge">🔥 热门</span>`;
-    html += `<span class="pc-views">👁 ${viewStr}</span>`;
+    html += `<div class="cm-body">`;
+    html += `<div class="cm-title">${p.title}</div>`;
+    html += `<div class="cm-excerpt">${excerpt}</div>`;
+    html += `<div class="cm-tags">${p.tags.slice(0,3).map(t => `<span class="cm-tag" onclick="event.stopPropagation();searchByTag('${t}')">#${t}</span>`).join('')}</div>`;
+    html += `<div class="cm-author-row"><img src="${p.authorAvatar}" alt=""><span class="cm-author-name">${p.authorName}</span>`;
+    html += `<div class="cm-footer-stats"><span onclick="event.stopPropagation();likePost(this,${p.likes})">\u2764\ufe0f ${fmtN(p.likes)}</span><span>\ud83d\udcac ${p.comments}</span></div>`;
     html += `</div></div>`;
 
     card.innerHTML = html;
@@ -689,7 +699,7 @@ function searchByTag(tag) {
 }
 
 function filterPosts(type, btn) {
-  document.querySelectorAll('.ctab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.cn-link,.ctab').forEach(t => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
   commSearchQuery = '';
   const input = document.getElementById('commSearch');

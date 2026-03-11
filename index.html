@@ -505,85 +505,90 @@
 
     <!-- ==================== COMMUNITY ==================== -->
     <div class="page" id="page-community">
-        <div class="pg">
-            <!-- Top bar -->
-            <div class="comm-top">
-                <h1 class="pg-title">学脉圈</h1>
-                <div class="comm-top-right">
-                    <div class="comm-search">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                        <input type="text" placeholder="搜索帖子、话题..." id="commSearch" oninput="searchPosts(this.value)">
-                    </div>
-                    <button class="btn btn-glow" onclick="showNewPostModal()">+ 发帖</button>
+        <div class="comm-wrapper">
+            <!-- Fixed Left Sidebar -->
+            <nav class="comm-nav">
+                <div class="cn-logo">
+                    <svg viewBox="0 0 32 32" width="22" height="22"><path d="M4 16 Q8 8,12 16 Q14 20,16 12 Q18 4,20 16 Q22 24,24 16 Q26 12,28 16" fill="none" stroke="url(#g1)" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    <span>学脉圈</span>
                 </div>
-            </div>
-
-            <!-- Stats bar -->
-            <div class="comm-stats">
-                <div class="cs-item"><span class="cs-val" id="commPostCount">0</span><span class="cs-lab">帖子</span></div>
-                <div class="cs-item"><span class="cs-val" id="commUserCount">0</span><span class="cs-lab">活跃用户</span></div>
-                <div class="cs-item"><span class="cs-val" id="commTodayCount">0</span><span class="cs-lab">今日新帖</span></div>
-                <div class="cs-item"><span class="cs-val" id="commLikeCount">0</span><span class="cs-lab">总点赞</span></div>
-            </div>
-
-            <!-- Tabs -->
-            <div class="comm-tabs">
-                <button class="ctab active" onclick="filterPosts('all',this)">🔥 推荐</button>
-                <button class="ctab" onclick="filterPosts('解题笔记',this)">📝 笔记</button>
-                <button class="ctab" onclick="filterPosts('错题分析',this)">💡 错题</button>
-                <button class="ctab" onclick="filterPosts('打卡成就',this)">🏆 打卡</button>
-                <button class="ctab" onclick="filterPosts('求助帖',this)">❓ 求助</button>
-                <button class="ctab" onclick="filterPosts('经验分享',this)">✨ 经验</button>
-            </div>
-
-            <div class="comm-layout">
-                <div class="posts-masonry" id="postsGrid"></div>
-                <aside class="comm-side">
-                    <!-- User card -->
-                    <div class="side-card side-user" data-anim>
-                        <div class="su-row">
-                            <img src="" class="su-avatar" id="commAvatar" alt="">
-                            <div>
-                                <div class="su-name" id="commName"></div>
-                                <div class="su-school" id="commSchool"></div>
-                            </div>
-                        </div>
-                        <div class="su-stats">
-                            <div><strong id="commMyPosts">0</strong><span>帖子</span></div>
-                            <div><strong id="commMyLikes">0</strong><span>获赞</span></div>
-                            <div><strong id="commMyFollowers">0</strong><span>关注</span></div>
-                        </div>
+                <div class="cn-user">
+                    <img src="" id="commAvatar" alt="">
+                    <div class="cn-user-info">
+                        <div id="commName"></div>
+                        <div class="cn-school" id="commSchool"></div>
                     </div>
-                    <!-- Hot topics -->
-                    <div class="side-card" data-anim>
-                        <h3>🔥 热门话题</h3>
-                        <a href="#" class="ht" onclick="searchByTag('向心力');return false"><span class="ht-num">1</span>#向心力专题<span>1.2k</span></a>
-                        <a href="#" class="ht" onclick="searchByTag('电磁感应');return false"><span class="ht-num">2</span>#电磁感应<span>892</span></a>
-                        <a href="#" class="ht" onclick="searchByTag('动能定理');return false"><span class="ht-num">3</span>#动能定理<span>756</span></a>
-                        <a href="#" class="ht" onclick="searchByTag('受力分析');return false"><span class="ht-num">4</span>#受力分析<span>634</span></a>
-                        <a href="#" class="ht" onclick="searchByTag('动量');return false"><span class="ht-num">5</span>#动量守恒<span>521</span></a>
-                        <a href="#" class="ht" onclick="searchByTag('光学');return false"><span class="ht-num">6</span>#光学总结<span>483</span></a>
-                        <a href="#" class="ht" onclick="searchByTag('实验');return false"><span class="ht-num">7</span>#实验技巧<span>412</span></a>
-                    </div>
-                    <!-- Leaderboard -->
-                    <div class="side-card" data-anim>
-                        <h3>🏆 学脉值排行</h3>
-                        <div id="leaderboard"></div>
-                    </div>
-                    <!-- Announcements -->
-                    <div class="side-card" data-anim>
-                        <h3>📢 公告</h3>
-                        <div class="ann"><span class="ann-tag new">NEW</span>学脉圈2.0上线！支持图文笔记</div>
-                        <div class="ann"><span class="ann-tag ev">活动</span>高考百日冲刺打卡，赢Pro会员</div>
-                        <div class="ann"><span class="ann-tag new">NEW</span>AI写作助手：一键生成解题笔记</div>
-                    </div>
-                </aside>
-            </div>
+                </div>
+                <div class="cn-stats">
+                    <div><strong id="commMyPosts">12</strong><span>帖子</span></div>
+                    <div><strong id="commMyLikes">586</strong><span>获赞</span></div>
+                    <div><strong id="commMyFollowers">48</strong><span>粉丝</span></div>
+                </div>
+                <div class="cn-links">
+                    <a href="#" class="cn-link active" onclick="filterPosts('all',this);return false"><span class="cn-ico">🔥</span> 推荐</a>
+                    <a href="#" class="cn-link" onclick="filterPosts('解题笔记',this);return false"><span class="cn-ico">📝</span> 解题笔记</a>
+                    <a href="#" class="cn-link" onclick="filterPosts('错题分析',this);return false"><span class="cn-ico">💡</span> 错题分析</a>
+                    <a href="#" class="cn-link" onclick="filterPosts('打卡成就',this);return false"><span class="cn-ico">🏆</span> 打卡成就</a>
+                    <a href="#" class="cn-link" onclick="filterPosts('求助帖',this);return false"><span class="cn-ico">❓</span> 求助</a>
+                    <a href="#" class="cn-link" onclick="filterPosts('经验分享',this);return false"><span class="cn-ico">✨</span> 经验分享</a>
+                </div>
+                <button class="btn btn-glow btn-block cn-post-btn" onclick="showNewPostModal()">✏️ 发帖</button>
+                <div class="cn-trending">
+                    <h4>热门话题</h4>
+                    <a href="#" onclick="searchByTag('向心力');return false"><span class="cn-rank">1</span>#向心力专题<span class="cn-cnt">1.2k</span></a>
+                    <a href="#" onclick="searchByTag('电磁感应');return false"><span class="cn-rank">2</span>#电磁感应<span class="cn-cnt">892</span></a>
+                    <a href="#" onclick="searchByTag('动能定理');return false"><span class="cn-rank">3</span>#动能定理<span class="cn-cnt">756</span></a>
+                    <a href="#" onclick="searchByTag('受力分析');return false"><span class="cn-rank">4</span>#受力分析<span class="cn-cnt">634</span></a>
+                    <a href="#" onclick="searchByTag('动量');return false"><span class="cn-rank">5</span>#动量守恒<span class="cn-cnt">521</span></a>
+                </div>
+            </nav>
 
-            <!-- Load more -->
-            <div class="comm-loadmore" id="commLoadMore">
-                <button class="btn btn-glass" onclick="loadMorePosts()">加载更多</button>
-            </div>
+            <!-- Main Feed -->
+            <main class="comm-main">
+                <div class="cm-topbar">
+                    <div class="cm-search">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        <input type="text" placeholder="搜索笔记、话题、用户..." id="commSearch" oninput="searchPosts(this.value)">
+                    </div>
+                    <div class="cm-live-stats">
+                        <div class="cm-live-dot"></div>
+                        <span><strong id="commPostCount">500</strong> 帖子</span>
+                        <span>·</span>
+                        <span><strong id="commUserCount">100</strong> 用户在线</span>
+                        <span>·</span>
+                        <span>今日 <strong id="commTodayCount">47</strong> 新帖</span>
+                    </div>
+                </div>
+
+                <!-- Horizontal scroll: featured posts -->
+                <div class="cm-featured">
+                    <div class="cm-feat-scroll" id="featuredScroll"></div>
+                </div>
+
+                <!-- Waterfall Grid -->
+                <div class="cm-grid" id="postsGrid"></div>
+                <div class="comm-loadmore" id="commLoadMore">
+                    <button class="btn btn-glass" onclick="loadMorePosts()">加载更多帖子</button>
+                </div>
+            </main>
+
+            <!-- Right Panel -->
+            <aside class="comm-right">
+                <div class="cr-card">
+                    <h4>🏆 学脉值排行</h4>
+                    <div id="leaderboard"></div>
+                </div>
+                <div class="cr-card">
+                    <h4>📢 公告</h4>
+                    <div class="cr-ann"><span class="ann-tag new">NEW</span>学脉圈2.0：支持数学公式渲染</div>
+                    <div class="cr-ann"><span class="ann-tag ev">活动</span>高考百日冲刺打卡赢Pro</div>
+                    <div class="cr-ann"><span class="ann-tag new">NEW</span>AI一键生成解题笔记上线</div>
+                </div>
+                <div class="cr-card">
+                    <h4>💡 今日推荐</h4>
+                    <div class="cr-rec" id="dailyRec"></div>
+                </div>
+            </aside>
         </div>
     </div>
 
