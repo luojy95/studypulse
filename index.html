@@ -283,8 +283,8 @@
                             </div>
                         </div>
                         <div class="demo-label">
-                            <strong>🧠 刷题练习</strong>
-                            <span>AI推荐 · 专题练习 · 模拟考试 · 错题回顾</span>
+                            <strong>🧠 AI 1对1</strong>
+                            <span>AI任务 · 实时对话 · 自主练习 · 模拟考试</span>
                         </div>
                     </div>
                     <div class="demo-card" data-anim onclick="showPage('community')">
@@ -439,21 +439,6 @@
             </div>
 
             <div class="dash-grid">
-                <!-- Streak Calendar (full width, first) -->
-                <div class="dcard dcard-full" data-anim>
-                    <div class="dcard-h"><span class="dcard-t">📅 学习日历</span><span class="dcard-sub">最近 90 天活动记录</span></div>
-                    <div class="streak-cal" id="streakCalendar"></div>
-                    <div class="streak-cal-legend">
-                        <span>少</span>
-                        <div class="scl-block" style="background:rgba(129,140,248,.05)"></div>
-                        <div class="scl-block" style="background:rgba(129,140,248,.2)"></div>
-                        <div class="scl-block" style="background:rgba(129,140,248,.4)"></div>
-                        <div class="scl-block" style="background:rgba(129,140,248,.7)"></div>
-                        <div class="scl-block" style="background:#818CF8"></div>
-                        <span>多</span>
-                    </div>
-                </div>
-
                 <!-- Heatmap (left) + Weak TOP 5 & Goals (right) -->
                 <div class="dcard" data-anim style="grid-column:1">
                     <div class="dcard-h"><span class="dcard-t">📊 知识掌握热力图</span><span class="dcard-sub">颜色越亮掌握越好</span></div>
@@ -469,6 +454,21 @@
                     <div class="dcard" data-anim>
                         <div class="dcard-h"><span class="dcard-t">🎯 今日目标</span></div>
                         <div id="goalsContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Streak Calendar (full width, below heatmap) -->
+                <div class="dcard dcard-full" data-anim>
+                    <div class="dcard-h"><span class="dcard-t">📅 学习日历</span><span class="dcard-sub">最近 90 天活动记录</span></div>
+                    <div class="streak-cal" id="streakCalendar"></div>
+                    <div class="streak-cal-legend">
+                        <span>少</span>
+                        <div class="scl-block" style="background:rgba(129,140,248,.05)"></div>
+                        <div class="scl-block" style="background:rgba(129,140,248,.2)"></div>
+                        <div class="scl-block" style="background:rgba(129,140,248,.4)"></div>
+                        <div class="scl-block" style="background:rgba(129,140,248,.7)"></div>
+                        <div class="scl-block" style="background:#818CF8"></div>
+                        <span>多</span>
                     </div>
                 </div>
 
@@ -906,55 +906,6 @@
             </div>
             <!-- Empty state / list -->
             <div id="wbContent"></div>
-        </div>
-    </div>
-
-    <!-- ==================== AI TUTOR 助手 ==================== -->
-    <div class="page" id="page-ai">
-        <div class="pg ai-page">
-            <div class="ai-sidebar">
-                <div class="ai-sidebar-head">
-                    <h2>🤖 AI 学习助手</h2>
-                    <p>你的专属物理辅导老师</p>
-                </div>
-                <div class="ai-suggestions">
-                    <h4>试试问我：</h4>
-                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">向心力和离心力有什么区别？</button>
-                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">帮我分析一下我的薄弱知识点</button>
-                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">楞次定律怎么快速判断方向？</button>
-                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">给我出一道牛顿第二定律的计算题</button>
-                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">电磁感应的解题步骤是什么？</button>
-                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">帮我制定本周复习计划</button>
-                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">高考物理怎么准备？</button>
-                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">摩擦力方向怎么判断？</button>
-                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">万有引力和天体运动总结</button>
-                    <button class="ai-suggest-btn" onclick="aiAsk(this.textContent)">功和能量的关系怎么理解？</button>
-                </div>
-                <div class="ai-capabilities">
-                    <h4>我能帮你：</h4>
-                    <div class="ai-cap">📝 解题答疑</div>
-                    <div class="ai-cap">📊 学情分析</div>
-                    <div class="ai-cap">📚 知识讲解</div>
-                    <div class="ai-cap">🎯 出题练习</div>
-                    <div class="ai-cap">📅 复习规划</div>
-                    <div class="ai-cap">💡 错题分析</div>
-                </div>
-            </div>
-            <div class="ai-chat-area">
-                <div class="ai-messages" id="aiMessages">
-                    <div class="ai-msg ai-msg-bot">
-                        <div class="ai-msg-avatar">🤖</div>
-                        <div class="ai-msg-bubble">
-                            <div class="ai-msg-name">StudyPulse AI</div>
-                            <div class="ai-msg-text">你好！我是学脉AI助手，你的专属物理辅导老师。🎓<br><br>我可以帮你：<br>• 解答物理题目<br>• 分析你的薄弱知识点<br>• 讲解核心概念<br>• 出针对性练习题<br>• 制定复习计划<br><br>有什么想问的？直接输入就好！</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="ai-input-area">
-                    <input type="text" class="ai-input" id="aiInput" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')aiSend()">
-                    <button class="btn btn-glow" onclick="aiSend()">发送</button>
-                </div>
-            </div>
         </div>
     </div>
 

@@ -144,7 +144,6 @@ function showPage(page) {
   if (page === 'wrongbook') initWrongBook();
   if (page === 'daily') initDailyChallenge();
   if (page === 'pk') initPK();
-  if (page === 'ai') initAI();
   if (page === 'community') initCommunity();
   if (page === 'leaderboard') initLeaderboard();
   if (page === 'parent') initParent();
