@@ -331,6 +331,7 @@ img{max-width:100%;display:block}
 .dcard:hover{border-color:var(--border-hover)}
 .dcard:hover::before{opacity:1}
 .dcard-full{grid-column:1/-1}
+.dash-right-stack{display:flex;flex-direction:column;gap:16px}
 .dcard-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .dcard-t{font-size:.95rem;font-weight:700;display:flex;align-items:center;gap:6px}
 .dcard-sub{font-size:.7rem;color:var(--text-3)}
@@ -401,6 +402,32 @@ img{max-width:100%;display:block}
 /* ═══════════════ PRACTICE ═══════════════ */
 .pract-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
 .pract-pills{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Practice Mode Tabs */
+.pract-mode-tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--bg-card);border-radius:var(--r-sm);padding:4px;border:1px solid var(--border);width:fit-content}
+.pmt{padding:8px 24px;border-radius:var(--r-xs);font-size:.88rem;font-weight:600;color:var(--text-2);transition:all .25s ease}
+.pmt.active{background:var(--indigo);color:#fff}
+.pmt:hover{color:var(--text)}
+
+/* AI 1对1 Layout */
+.pai-layout{display:grid;grid-template-columns:1fr 380px;gap:16px;min-height:60vh}
+.pai-tasks{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:18px;overflow-y:auto}
+.pai-tasks-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.pai-tasks-head h3{font-size:.95rem;font-weight:700}
+.pai-progress{font-size:.75rem;color:var(--violet);font-weight:600}
+.pai-task-list{display:flex;flex-direction:column;gap:8px}
+.pai-task{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--r-xs);transition:all .25s ease;cursor:pointer}
+.pai-task:hover{border-color:var(--border-hover);background:rgba(99,102,241,.03)}
+.pai-task.done{border-color:rgba(16,185,129,.15);background:rgba(16,185,129,.03);opacity:.7}
+.pai-task-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem;transition:all .25s ease}
+.pai-task.done .pai-task-check{border-color:var(--emerald);background:var(--emerald);color:#fff}
+.pai-task-info{flex:1;min-width:0}
+.pai-task-title{font-size:.85rem;font-weight:600;margin-bottom:2px}
+.pai-task.done .pai-task-title{text-decoration:line-through;color:var(--text-3)}
+.pai-task-desc{font-size:.72rem;color:var(--text-3);line-height:1.4}
+.pai-task-tags{display:flex;gap:4px;margin-top:4px}
+.pai-task-tag{font-size:.58rem;padding:1px 6px;border-radius:var(--r-full)}
+.pai-chat{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden}
 .sp{padding:5px 12px;border-radius:var(--r-full);background:var(--bg-card);border:1px solid var(--border);font-size:.78rem;color:var(--text-2)}
 .sp b{color:var(--text);font-weight:700}
 .sp-ok{border-color:rgba(16,185,129,.2);color:var(--emerald)}
@@ -498,8 +525,16 @@ img{max-width:100%;display:block}
 .cm-feat-meta img{width:16px;height:16px;border-radius:50%}
 .cm-feat-meta .fm-likes{margin-left:auto;color:var(--pink)}
 
-/* Waterfall Grid — 3 cols within the main area */
-.cm-grid{columns:3;column-gap:12px}
+/* Waterfall Grid — 2 cols */
+.cm-grid{columns:2;column-gap:14px}
+
+/* City/Grade Filters */
+.cm-filters{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.cm-filter-group{display:flex;align-items:center;gap:4px}
+.cmf-label{font-size:.9rem}
+.cmf-select{padding:5px 10px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xs);color:var(--text-2);font-size:.78rem;transition:border .2s ease}
+.cmf-select:focus{outline:none;border-color:var(--indigo)}
+.cm-today-count{font-size:.72rem;color:var(--text-3);margin-left:auto}
 .cm-card{break-inside:avoid;margin-bottom:12px;display:inline-block;width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;cursor:pointer;transition:all .3s cubic-bezier(.22,1,.36,1);opacity:0;animation:cmCardIn .4s cubic-bezier(.22,1,.36,1) forwards}
 .cm-card:hover{border-color:rgba(129,140,248,.2);transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.25)}
 .cm-card.hot{border-color:rgba(236,72,153,.15)}
@@ -763,6 +798,9 @@ img{max-width:100%;display:block}
   .demo-grid{grid-template-columns:1fr 1fr}
   .dash-grid{grid-template-columns:1fr}
   .dcard-full{grid-column:span 1}
+  .dash-right-stack{grid-column:span 1}
+  .pai-layout{grid-template-columns:1fr}
+  .pai-chat{min-height:300px}
   .stats-row{grid-template-columns:1fr 1fr}
   .comm-wrapper{grid-template-columns:1fr}
   .comm-nav{display:none}

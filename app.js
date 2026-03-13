@@ -376,8 +376,50 @@ function renderActivity(s) {
 // ══════════ PRACTICE ══════════
 function initPractice() {
   filteredProblems = [...MOCK_PROBLEMS];
-  loadProblem();
+  renderAITasks();
   startTimer();
+}
+
+function switchPracticeTab(tab) {
+  document.getElementById('pmtAI').classList.toggle('active', tab === 'ai');
+  document.getElementById('pmtSelf').classList.toggle('active', tab === 'self');
+  document.getElementById('practAIMode').style.display = tab === 'ai' ? 'block' : 'none';
+  document.getElementById('practSelfMode').style.display = tab === 'self' ? 'block' : 'none';
+  if (tab === 'self') loadProblem();
+}
+
+function renderAITasks() {
+  const s = MOCK_STUDENTS[currentStudentIndex];
+  const weak = s.weakAreas || [];
+  const tasks = [
+    { icon: '📖', title: '复习：' + (weak[0] ? weak[0].point : '牛顿第二定律'), desc: '观看3分钟概念讲解视频，掌握核心公式和应用场景', tags: ['视频学习', weak[0] ? weak[0].category : '力学'], type: 'learn' },
+    { icon: '🎯', title: '专项练习：' + (weak[0] ? weak[0].point : '向心力') + ' × 5题', desc: 'AI为你精选5道针对薄弱知识点的练习题，由易到难', tags: ['AI推荐', '薄弱突破'], type: 'practice' },
+    { icon: '📕', title: '错题回顾：重做昨天的错题', desc: '艾宾浩斯间隔重复，巩固已纠正的知识点', tags: ['错题本', '间隔重复'], type: 'review' },
+    { icon: '📝', title: '今日模拟：10道综合选择题', desc: '混合各知识点，模拟真实考试选择题节奏', tags: ['模拟考', '综合'], type: 'exam' },
+    { icon: '🌐', title: '社区任务：分享一篇学习笔记', desc: '将今天的学习心得分享到学脉圈，帮助同学也帮助自己', tags: ['学脉圈', '社区'], type: 'community' }
+  ];
+  const doneCount = Math.min(Math.floor(s.totalProblems / 500), 3);
+  document.getElementById('paiProgress').textContent = `${doneCount}/5 已完成`;
+  document.getElementById('paiTaskList').innerHTML = tasks.map((t, i) => {
+    const done = i < doneCount;
+    return `<div class="pai-task ${done ? 'done' : ''}" onclick="${done ? '' : 'completeTask(' + i + ',this)'}">
+      <div class="pai-task-check">${done ? '✓' : t.icon}</div>
+      <div class="pai-task-info">
+        <div class="pai-task-title">${t.title}</div>
+        <div class="pai-task-desc">${t.desc}</div>
+        <div class="pai-task-tags">${t.tags.map(tag => `<span class="pai-task-tag" style="background:rgba(129,140,248,.08);color:var(--violet)">${tag}</span>`).join('')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function completeTask(idx, el) {
+  el.classList.add('done');
+  el.querySelector('.pai-task-check').textContent = '✓';
+  el.querySelector('.pai-task-title').style.textDecoration = 'line-through';
+  sessionXP += 20;
+  showToast('+20 XP 任务完成！', 'success');
+  spawnConfetti();
 }
 
 function populateFilters() {
@@ -633,6 +675,11 @@ function getFilteredComm() {
     const q = commSearchQuery.toLowerCase();
     posts = posts.filter(p => p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q) || p.tags.some(t => t.toLowerCase().includes(q)));
   }
+  // City/grade scope filters
+  const cityEl = document.getElementById('commCityFilter');
+  const gradeEl = document.getElementById('commGradeFilter');
+  if (cityEl && cityEl.value) posts = posts.filter(p => p.authorSchool && p.authorSchool.includes(cityEl.value));
+  if (gradeEl && gradeEl.value) posts = posts.filter(p => p.authorGrade === gradeEl.value);
   return posts;
 }
 
@@ -778,6 +825,38 @@ function searchByTag(tag) {
   commSearchQuery = tag;
   renderCommunityPosts(commCurrentFilter);
   showToast(`搜索: ${tag}`, 'info');
+}
+
+function filterByScope() {
+  const city = document.getElementById('commCityFilter').value;
+  const grade = document.getElementById('commGradeFilter').value;
+  commSearchQuery = '';
+  const input = document.getElementById('commSearch');
+  if (input) input.value = '';
+  // Filter posts by city (from school name) and grade
+  commPostsShown = 0;
+  document.getElementById('postsGrid').innerHTML = '';
+  const posts = getFilteredComm().filter(p => {
+    if (city && !p.authorSchool.includes(city)) return false;
+    if (grade && p.authorGrade !== grade) return false;
+    return true;
+  });
+  // Render filtered
+  const g = document.getElementById('postsGrid');
+  renderFilteredBatch(posts, 0);
+  showToast(`${city || '全国'} · ${grade || '全部年级'} · ${posts.length} 篇帖子`, 'info');
+}
+
+function renderFilteredBatch(posts, start) {
+  // reuse loadMorePosts logic but with custom post array
+  commPostsShown = 0;
+  commCurrentFilter = 'all';
+  document.getElementById('postsGrid').innerHTML = '';
+  // Temporarily replace getFilteredComm results
+  const origFilter = getFilteredComm;
+  const cityVal = document.getElementById('commCityFilter').value;
+  const gradeVal = document.getElementById('commGradeFilter').value;
+  loadMorePosts();
 }
 
 function filterPosts(type, btn) {

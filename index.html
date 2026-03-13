@@ -32,11 +32,10 @@
             <div class="nav-links" id="navLinks">
                 <a href="#" onclick="showPage('landing');return false" class="nav-link active" data-page="landing">首页</a>
                 <a href="#" onclick="showPage('dashboard');return false" class="nav-link" data-page="dashboard">学习追踪</a>
-                <a href="#" onclick="showPage('practice');return false" class="nav-link" data-page="practice">刷题练习</a>
+                <a href="#" onclick="showPage('practice');return false" class="nav-link" data-page="practice">AI 1对1</a>
                 <a href="#" onclick="showPage('wrongbook');return false" class="nav-link" data-page="wrongbook">错题本</a>
                 <a href="#" onclick="showPage('daily');return false" class="nav-link" data-page="daily">每日挑战</a>
                 <a href="#" onclick="showPage('pk');return false" class="nav-link" data-page="pk">PK对战</a>
-                <a href="#" onclick="showPage('ai');return false" class="nav-link" data-page="ai">AI助手</a>
                 <a href="#" onclick="showPage('community');return false" class="nav-link" data-page="community">学脉圈</a>
                 <a href="#" onclick="showPage('leaderboard');return false" class="nav-link" data-page="leaderboard">排行榜</a>
                 <a href="#" onclick="showPage('parent');return false" class="nav-link" data-page="parent">家长端</a>
@@ -440,7 +439,7 @@
             </div>
 
             <div class="dash-grid">
-                <!-- Streak Calendar -->
+                <!-- Streak Calendar (full width, first) -->
                 <div class="dcard dcard-full" data-anim>
                     <div class="dcard-h"><span class="dcard-t">📅 学习日历</span><span class="dcard-sub">最近 90 天活动记录</span></div>
                     <div class="streak-cal" id="streakCalendar"></div>
@@ -455,23 +454,28 @@
                     </div>
                 </div>
 
-                <div class="dcard dcard-full" data-anim>
-                    <div class="dcard-h"><span class="dcard-t">📊 知识掌握热力图</span><span class="dcard-sub">颜色越亮掌握越好 · 点击查看详情</span></div>
+                <!-- Heatmap (left) + Weak TOP 5 & Goals (right) -->
+                <div class="dcard" data-anim style="grid-column:1">
+                    <div class="dcard-h"><span class="dcard-t">📊 知识掌握热力图</span><span class="dcard-sub">颜色越亮掌握越好</span></div>
                     <div class="heatmap-wrap" id="heatmapContainer"></div>
                     <div class="heatmap-legend"><span>0%</span><div class="hl-bar"></div><span>100%</span></div>
                 </div>
-                <div class="dcard" data-anim>
-                    <div class="dcard-h"><span class="dcard-t">⚠️ 薄弱 TOP 5</span></div>
-                    <div id="weakPoints"></div>
-                    <button class="btn btn-glow btn-block" onclick="startWeakPointPractice()" style="margin-top:14px">🎯 专项练习</button>
+                <div class="dash-right-stack" style="grid-column:2">
+                    <div class="dcard" data-anim>
+                        <div class="dcard-h"><span class="dcard-t">⚠️ 薄弱 TOP 5</span></div>
+                        <div id="weakPoints"></div>
+                        <button class="btn btn-glow btn-block" onclick="startWeakPointPractice()" style="margin-top:14px">🎯 专项练习</button>
+                    </div>
+                    <div class="dcard" data-anim>
+                        <div class="dcard-h"><span class="dcard-t">🎯 今日目标</span></div>
+                        <div id="goalsContainer"></div>
+                    </div>
                 </div>
+
+                <!-- Trend + Activity (bottom row) -->
                 <div class="dcard" data-anim>
                     <div class="dcard-h"><span class="dcard-t">📈 本周趋势</span></div>
                     <div class="trend-chart" id="trendChart"></div>
-                </div>
-                <div class="dcard" data-anim>
-                    <div class="dcard-h"><span class="dcard-t">🎯 今日目标</span></div>
-                    <div id="goalsContainer"></div>
                 </div>
                 <div class="dcard" data-anim>
                     <div class="dcard-h"><span class="dcard-t">📋 最近做题</span></div>
@@ -481,11 +485,11 @@
         </div>
     </div>
 
-    <!-- ==================== PRACTICE ==================== -->
+    <!-- ==================== PRACTICE (AI 1对1 + 自主学习) ==================== -->
     <div class="page" id="page-practice">
         <div class="pg">
             <div class="pract-top">
-                <h1 class="pg-title">刷题练习</h1>
+                <h1 class="pg-title">AI 1对1</h1>
                 <div class="pract-pills">
                     <span class="sp">XP <b id="sessionXP">0</b></span>
                     <span class="sp">本次 <b id="practiceCount">0</b></span>
@@ -495,43 +499,83 @@
                     <span class="sp">⏱<b id="practiceTimer">00:00</b></span>
                 </div>
             </div>
-            <div class="mode-row">
-                <button class="mode-chip active" onclick="setPracticeMode('smart',this)">🤖 AI推荐</button>
-                <button class="mode-chip" onclick="setPracticeMode('topic',this)">📚 专题</button>
-                <button class="mode-chip" onclick="setPracticeMode('exam',this)">📝 模考</button>
-                <button class="mode-chip" onclick="setPracticeMode('wrong',this)">❌ 错题</button>
-            </div>
-            <div class="filter-row">
-                <select id="categoryFilter" onchange="filterProblems()"><option value="">全部分类</option></select>
-                <select id="topicFilter" onchange="filterProblems()"><option value="">全部专题</option></select>
-                <select id="difficultyFilter" onchange="filterProblems()"><option value="">全部难度</option><option value="基础">基础</option><option value="中等">中等</option><option value="较难">较难</option><option value="难">难</option><option value="竞赛">竞赛</option></select>
-                <select id="typeFilter" onchange="filterProblems()"><option value="">全部题型</option><option value="选择题">选择题</option><option value="填空题">填空题</option><option value="计算题">计算题</option><option value="实验题">实验题</option><option value="综合题">综合题</option></select>
+
+            <!-- Two mode tabs -->
+            <div class="pract-mode-tabs">
+                <button class="pmt active" id="pmtAI" onclick="switchPracticeTab('ai')">🤖 AI 1对1</button>
+                <button class="pmt" id="pmtSelf" onclick="switchPracticeTab('self')">📚 自主学习</button>
             </div>
 
-            <div class="problem-card" id="problemContainer">
-                <div class="p-tags">
-                    <span class="pt pt-id" id="problemId"></span>
-                    <span class="pt pt-cat" id="problemCategory"></span>
-                    <span class="pt pt-topic" id="problemTopic"></span>
-                    <span class="pt pt-kp" id="problemKP"></span>
-                    <span class="pt pt-diff" id="problemDiff"></span>
-                    <span class="pt pt-type" id="problemType"></span>
-                </div>
-                <div class="p-question" id="problemQuestion"></div>
-                <div class="p-options" id="problemOptions"></div>
-                <div class="p-input" id="problemInput" style="display:none"><textarea placeholder="请输入答案..." id="answerInput"></textarea></div>
-                <div class="p-actions">
-                    <button class="btn btn-glass" onclick="skipProblem()">跳过</button>
-                    <button class="btn btn-glow" onclick="submitAnswer()" id="submitBtn">提交答案</button>
-                    <button class="btn btn-glow" onclick="nextProblem()" id="nextBtn" style="display:none">下一题 →</button>
-                </div>
-                <div class="p-result" id="problemResult" style="display:none">
-                    <div class="p-result-banner" id="resultHeader"></div>
-                    <div class="p-result-detail" id="resultExplanation"></div>
-                    <div class="p-similar" id="similarProblems"><h4>📎 同类题推荐</h4><div id="similarList"></div></div>
+            <!-- AI 1对1 Mode: task list + chat -->
+            <div class="pract-ai-mode" id="practAIMode">
+                <div class="pai-layout">
+                    <!-- Task list -->
+                    <div class="pai-tasks">
+                        <div class="pai-tasks-head">
+                            <h3>📋 今日AI任务</h3>
+                            <span class="pai-progress" id="paiProgress">0/5 已完成</span>
+                        </div>
+                        <div class="pai-task-list" id="paiTaskList"></div>
+                    </div>
+                    <!-- Chat -->
+                    <div class="pai-chat">
+                        <div class="pai-chat-head">💬 AI 实时对话</div>
+                        <div class="ai-messages" id="aiMessages">
+                            <div class="ai-msg ai-msg-bot">
+                                <div class="ai-msg-avatar">🤖</div>
+                                <div class="ai-msg-bubble">
+                                    <div class="ai-msg-name">StudyPulse AI</div>
+                                    <div class="ai-msg-text">你好！我已为你准备了今日学习任务。完成左边的任务可以获得额外XP！有任何问题随时问我 💬</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-input-area">
+                            <input type="text" class="ai-input" id="aiInput" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')aiSend()">
+                            <button class="btn btn-glow" onclick="aiSend()">发送</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="pract-bar"><div class="pract-bar-fill" id="practiceFill"></div></div>
+
+            <!-- Self Study Mode: current practice UI -->
+            <div class="pract-self-mode" id="practSelfMode" style="display:none">
+                <div class="mode-row">
+                    <button class="mode-chip active" onclick="setPracticeMode('smart',this)">🤖 AI推荐</button>
+                    <button class="mode-chip" onclick="setPracticeMode('topic',this)">📚 专题</button>
+                    <button class="mode-chip" onclick="setPracticeMode('exam',this)">📝 模考</button>
+                    <button class="mode-chip" onclick="setPracticeMode('wrong',this)">❌ 错题</button>
+                </div>
+                <div class="filter-row">
+                    <select id="categoryFilter" onchange="filterProblems()"><option value="">全部分类</option></select>
+                    <select id="topicFilter" onchange="filterProblems()"><option value="">全部专题</option></select>
+                    <select id="difficultyFilter" onchange="filterProblems()"><option value="">全部难度</option><option value="基础">基础</option><option value="中等">中等</option><option value="较难">较难</option><option value="难">难</option><option value="竞赛">竞赛</option></select>
+                    <select id="typeFilter" onchange="filterProblems()"><option value="">全部题型</option><option value="选择题">选择题</option><option value="填空题">填空题</option><option value="计算题">计算题</option><option value="实验题">实验题</option><option value="综合题">综合题</option></select>
+                </div>
+                <div class="problem-card" id="problemContainer">
+                    <div class="p-tags">
+                        <span class="pt pt-id" id="problemId"></span>
+                        <span class="pt pt-cat" id="problemCategory"></span>
+                        <span class="pt pt-topic" id="problemTopic"></span>
+                        <span class="pt pt-kp" id="problemKP"></span>
+                        <span class="pt pt-diff" id="problemDiff"></span>
+                        <span class="pt pt-type" id="problemType"></span>
+                    </div>
+                    <div class="p-question" id="problemQuestion"></div>
+                    <div class="p-options" id="problemOptions"></div>
+                    <div class="p-input" id="problemInput" style="display:none"><textarea placeholder="请输入答案..." id="answerInput"></textarea></div>
+                    <div class="p-actions">
+                        <button class="btn btn-glass" onclick="skipProblem()">跳过</button>
+                        <button class="btn btn-glow" onclick="submitAnswer()" id="submitBtn">提交答案</button>
+                        <button class="btn btn-glow" onclick="nextProblem()" id="nextBtn" style="display:none">下一题 →</button>
+                    </div>
+                    <div class="p-result" id="problemResult" style="display:none">
+                        <div class="p-result-banner" id="resultHeader"></div>
+                        <div class="p-result-detail" id="resultExplanation"></div>
+                        <div class="p-similar" id="similarProblems"><h4>📎 同类题推荐</h4><div id="similarList"></div></div>
+                    </div>
+                </div>
+                <div class="pract-bar"><div class="pract-bar-fill" id="practiceFill"></div></div>
+            </div>
         </div>
     </div>
 
@@ -586,10 +630,38 @@
                         <div class="cm-live-dot"></div>
                         <span><strong id="commPostCount">500</strong> 帖子</span>
                         <span>·</span>
-                        <span><strong id="commUserCount">100</strong> 用户在线</span>
-                        <span>·</span>
-                        <span>今日 <strong id="commTodayCount">47</strong> 新帖</span>
+                        <span><strong id="commUserCount">100</strong> 在线</span>
                     </div>
+                </div>
+
+                <!-- City/Grade Filters -->
+                <div class="cm-filters">
+                    <div class="cm-filter-group">
+                        <span class="cmf-label">🏙️</span>
+                        <select class="cmf-select" id="commCityFilter" onchange="filterByScope()">
+                            <option value="">全国</option>
+                            <option value="北京">北京</option>
+                            <option value="上海">上海</option>
+                            <option value="成都">成都</option>
+                            <option value="深圳">深圳</option>
+                            <option value="杭州">杭州</option>
+                            <option value="南京">南京</option>
+                            <option value="石家庄">石家庄</option>
+                            <option value="绵阳">绵阳</option>
+                            <option value="武汉">武汉</option>
+                            <option value="广州">广州</option>
+                        </select>
+                    </div>
+                    <div class="cm-filter-group">
+                        <span class="cmf-label">🎓</span>
+                        <select class="cmf-select" id="commGradeFilter" onchange="filterByScope()">
+                            <option value="">全部年级</option>
+                            <option value="高一">高一</option>
+                            <option value="高二">高二</option>
+                            <option value="高三">高三</option>
+                        </select>
+                    </div>
+                    <span class="cm-today-count">今日 <strong id="commTodayCount">47</strong> 新帖</span>
                 </div>
 
                 <!-- Horizontal scroll: featured posts -->
